@@ -1,0 +1,857 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Southern 100</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy:    #1B2A4A;
+    --navy2:   #243560;
+    --blue:    #1D5FA8;
+    --blue-lt: #EEF4FC;
+    --blue-dot:#DCE8F8;
+    --green:   #1A7A4A;
+    --green-lt:#E6F4EC;
+    --amber:   #8A6200;
+    --amber-lt:#FDF3DC;
+    --red:     #9B1C1C;
+    --red-lt:  #FDE8E8;
+    --purple:  #5B2D8E;
+    --purple-lt:#F0E8FA;
+    --slate:   #4A5568;
+    --slate-lt:#EEF1F8;
+    --orange:  #B84F00;
+    --orange-lt:#FDEEE5;
+    --body:    #1A1F2E;
+    --muted:   #9AA5B8;
+    --row-odd: #F2F4F8;
+    --row-even:#FFFFFF;
+    --bg:      #0D1628;
+    --surface: #141E35;
+    --surface2:#1A2540;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: #E2E8F4;
+    min-height: 100vh;
+    font-size: 13px;
+  }
+
+  /* HEADER */
+  header {
+    background: linear-gradient(135deg, #0a1020 0%, #1B2A4A 60%, #12203a 100%);
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    padding: 0 20px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    height: 56px;
+  }
+
+  .logo {
+    font-family: 'Playfair Display', serif;
+    font-size: 18px;
+    font-weight: 900;
+    letter-spacing: 0.02em;
+    color: #E2E8F4;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .logo span { color: #6FA8DC; }
+
+  .header-stats {
+    display: flex;
+    gap: 16px;
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+    margin-left: auto;
+    flex-shrink: 0;
+  }
+  .stat-pill {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 3px;
+    padding: 2px 8px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .stat-pill b { color: #E2E8F4; font-weight: 500; }
+
+  /* TABS */
+  .tabs {
+    display: flex;
+    gap: 0;
+    background: var(--surface);
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    padding: 0 20px;
+  }
+  .tab-btn {
+    padding: 10px 20px;
+    border: none;
+    background: none;
+    color: var(--muted);
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    border-bottom: 2px solid transparent;
+    transition: all 0.15s;
+  }
+  .tab-btn:hover { color: #C4D4EC; }
+  .tab-btn.active { color: #6FA8DC; border-bottom-color: #6FA8DC; }
+
+  /* FILTERS */
+  .filter-bar {
+    background: var(--surface);
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    padding: 10px 20px;
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .search-wrap {
+    position: relative;
+    flex: 1;
+    min-width: 180px;
+    max-width: 320px;
+  }
+  .search-wrap svg {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--muted);
+    pointer-events: none;
+  }
+  .search-input {
+    width: 100%;
+    padding: 6px 10px 6px 32px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 4px;
+    color: #E2E8F4;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .search-input::placeholder { color: var(--muted); }
+  .search-input:focus { border-color: rgba(111,168,220,0.5); }
+
+  select {
+    padding: 6px 10px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 4px;
+    color: #E2E8F4;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    cursor: pointer;
+    outline: none;
+    min-width: 110px;
+  }
+  select option { background: #1A2540; }
+
+  .filter-results {
+    margin-left: auto;
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+
+  /* TABLE */
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  .table-wrap {
+    overflow-x: auto;
+    padding: 16px 20px;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+  }
+
+  thead th {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    padding: 8px 10px;
+    text-align: left;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    white-space: nowrap;
+    cursor: pointer;
+    user-select: none;
+  }
+  thead th:hover { color: #C4D4EC; }
+  thead th .sort-indicator { margin-left: 4px; opacity: 0.4; }
+  thead th.sorted .sort-indicator { opacity: 1; color: #6FA8DC; }
+
+  tbody tr {
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    cursor: pointer;
+    transition: background 0.1s;
+  }
+  tbody tr:hover { background: rgba(111,168,220,0.06); }
+  tbody tr.expanded { background: rgba(111,168,220,0.04); }
+
+  td {
+    padding: 8px 10px;
+    vertical-align: middle;
+    font-size: 12px;
+  }
+
+  .slot-num {
+    font-family: 'DM Mono', monospace;
+    font-weight: 500;
+    color: #6FA8DC;
+    font-size: 11px;
+    width: 40px;
+    text-align: center;
+  }
+
+  .cat-id {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: #9AA5B8;
+    max-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .target-name {
+    font-weight: 500;
+    color: #E2E8F4;
+    max-width: 200px;
+  }
+
+  .type-pill {
+    display: inline-block;
+    padding: 2px 7px;
+    border-radius: 3px;
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    font-weight: 500;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  .status-pill {
+    display: inline-block;
+    padding: 2px 7px;
+    border-radius: 3px;
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    font-weight: 500;
+    letter-spacing: 0.03em;
+    white-space: nowrap;
+  }
+
+  .coord { font-family: 'DM Mono', monospace; font-size: 10px; color: #9AA5B8; }
+  .field-text { color: #B0BDD0; font-size: 11px; }
+
+  /* EXPANDED ROW */
+  .expanded-row td {
+    padding: 0;
+  }
+  .expand-panel {
+    background: #0f1929;
+    border-top: 1px solid rgba(255,255,255,0.04);
+    border-bottom: 2px solid rgba(111,168,220,0.15);
+    padding: 20px 24px 20px 60px;
+  }
+  .expand-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 12px 24px;
+    margin-bottom: 16px;
+  }
+  .expand-field label {
+    display: block;
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    margin-bottom: 3px;
+  }
+  .expand-field span {
+    font-size: 12px;
+    color: #C4D4EC;
+    font-family: 'DM Mono', monospace;
+  }
+  .expand-notes {
+    border-top: 1px solid rgba(255,255,255,0.05);
+    padding-top: 12px;
+    margin-top: 4px;
+  }
+  .expand-notes label {
+    display: block;
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+  .expand-notes p {
+    font-size: 11.5px;
+    color: #B0BDD0;
+    line-height: 1.7;
+    max-width: 900px;
+    white-space: pre-wrap;
+  }
+  .expand-arrow {
+    display: inline-block;
+    margin-right: 8px;
+    transition: transform 0.2s;
+    color: var(--muted);
+    font-size: 10px;
+  }
+  tr.expanded .expand-arrow { transform: rotate(90deg); color: #6FA8DC; }
+
+  /* SEASONAL PLANNER */
+  .planner-wrap {
+    padding: 16px 20px;
+    overflow-x: auto;
+  }
+
+  .planner-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 11px;
+    min-width: 700px;
+  }
+
+  .planner-table thead th {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    padding: 8px 6px;
+    text-align: center;
+    color: var(--muted);
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    white-space: nowrap;
+  }
+  .planner-table thead th:first-child { width: 36px; text-align: center; }
+  .planner-table thead th:nth-child(2) { text-align: left; width: 200px; }
+
+  .planner-table tbody tr {
+    border-bottom: 1px solid rgba(255,255,255,0.03);
+    transition: background 0.1s;
+  }
+  .planner-table tbody tr:hover { background: rgba(111,168,220,0.05); }
+
+  .planner-table td {
+    padding: 5px 6px;
+    text-align: center;
+    vertical-align: middle;
+  }
+  .planner-table td:nth-child(2) { text-align: left; padding-left: 8px; }
+
+  .planner-slot {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: #6FA8DC;
+    font-weight: 500;
+  }
+  .planner-name {
+    font-size: 11px;
+    color: #C4D4EC;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 200px;
+  }
+  .planner-name .planner-cat {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    color: var(--muted);
+    margin-left: 6px;
+  }
+
+  .dot-cell {
+    width: 40px;
+    font-size: 13px;
+    line-height: 1;
+  }
+  .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; }
+  .dot-complete { background: #1A7A4A; box-shadow: 0 0 4px rgba(26,122,74,0.5); }
+  .dot-improve  { background: #8A6200; box-shadow: 0 0 4px rgba(138,98,0,0.5); }
+  .dot-image    { background: #1D5FA8; box-shadow: 0 0 3px rgba(29,95,168,0.4); }
+  .dot-empty    { background: rgba(255,255,255,0.06); }
+
+  /* Current month highlight */
+  .month-highlight { background: rgba(111,168,220,0.05); }
+  .month-col-header.current-month { color: #6FA8DC !important; }
+
+  /* LEGEND */
+  .legend {
+    display: flex;
+    gap: 16px;
+    padding: 8px 20px 12px;
+    flex-wrap: wrap;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 10px;
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+  }
+
+  /* TYPE COLOURS */
+  .t-emission     { background: rgba(29,95,168,0.2);  color: #6FA8DC; }
+  .t-snr          { background: rgba(155,28,28,0.2);  color: #E57373; }
+  .t-darkneb      { background: rgba(91,45,142,0.2);  color: #B39DDB; }
+  .t-cometaryglobule { background: rgba(74,85,104,0.2); color: #90A4AE; }
+  .t-reflection   { background: rgba(26,122,74,0.2);  color: #66BB6A; }
+  .t-ocneb        { background: rgba(138,98,0,0.2);   color: #FFB300; }
+  .t-globular     { background: rgba(184,79,0,0.2);   color: #FFA040; }
+  .t-planneb      { background: rgba(184,79,0,0.2);   color: #FFA040; }
+  .t-galaxy       { background: rgba(26,122,74,0.2);  color: #66BB6A; }
+  .t-lmc          { background: rgba(91,45,142,0.2);  color: #CE93D8; }
+  .t-smc          { background: rgba(91,45,142,0.2);  color: #CE93D8; }
+
+  .s-complete { background: rgba(26,122,74,0.2);  color: #66BB6A; }
+  .s-improve  { background: rgba(138,98,0,0.2);   color: #FFB300; }
+  .s-image    { background: rgba(29,95,168,0.15); color: #6FA8DC; }
+  .s-partial  { background: rgba(29,95,168,0.15); color: #90CAF9; }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+
+  /* Star field background */
+  .star-bg {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    overflow: hidden;
+  }
+  .star-bg::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+      radial-gradient(1px 1px at 15% 22%, rgba(255,255,255,0.35) 0%, transparent 100%),
+      radial-gradient(1px 1px at 42% 8%, rgba(255,255,255,0.25) 0%, transparent 100%),
+      radial-gradient(1px 1px at 67% 31%, rgba(255,255,255,0.3) 0%, transparent 100%),
+      radial-gradient(1px 1px at 83% 15%, rgba(255,255,255,0.2) 0%, transparent 100%),
+      radial-gradient(1px 1px at 28% 45%, rgba(255,255,255,0.2) 0%, transparent 100%),
+      radial-gradient(1px 1px at 91% 62%, rgba(255,255,255,0.25) 0%, transparent 100%),
+      radial-gradient(1.5px 1.5px at 55% 78%, rgba(255,255,255,0.15) 0%, transparent 100%),
+      radial-gradient(1px 1px at 7% 88%, rgba(255,255,255,0.2) 0%, transparent 100%);
+  }
+
+  .content { position: relative; z-index: 1; }
+
+  .no-results {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+  }
+  .no-results b { display: block; font-size: 18px; margin-bottom: 8px; color: rgba(255,255,255,0.1); }
+
+  @media (max-width: 640px) {
+    header { gap: 12px; padding: 0 12px; }
+    .header-stats { display: none; }
+    .filter-bar { padding: 8px 12px; }
+    .table-wrap, .planner-wrap { padding: 8px 12px; }
+  }
+</style>
+</head>
+<body>
+<div class="star-bg"></div>
+<div class="content">
+
+<header>
+  <div class="logo">The Southern <span>100</span></div>
+  <div class="header-stats">
+    <div class="stat-pill"><b id="stat-complete">—</b> Complete</div>
+    <div class="stat-pill"><b id="stat-improve">—</b> Improve</div>
+    <div class="stat-pill"><b id="stat-image">—</b> To Image</div>
+    <div class="stat-pill">Ocean Grove · <b>−38.16°</b></div>
+  </div>
+</header>
+
+<div class="tabs">
+  <button class="tab-btn active" onclick="switchTab('catalogue')">Catalogue</button>
+  <button class="tab-btn" onclick="switchTab('planner')">Seasonal Planner</button>
+</div>
+
+<div class="filter-bar">
+  <div class="search-wrap">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+    <input type="text" class="search-input" id="search" placeholder="Search name or catalogue…" oninput="applyFilters()">
+  </div>
+  <select id="filter-type" onchange="applyFilters()">
+    <option value="">All Types</option>
+    <option>Emission</option>
+    <option>SNR</option>
+    <option>Dark Neb</option>
+    <option>Cometary Globule</option>
+    <option>Reflection</option>
+    <option>OC+Neb</option>
+    <option>Globular</option>
+    <option>Plan.Neb</option>
+    <option>Galaxy</option>
+    <option>LMC</option>
+    <option>SMC</option>
+  </select>
+  <select id="filter-status" onchange="applyFilters()">
+    <option value="">All Status</option>
+    <option>Complete</option>
+    <option>Improve</option>
+    <option>To Image</option>
+    <option>Partial</option>
+  </select>
+  <select id="filter-season" onchange="applyFilters()">
+    <option value="">Any Season</option>
+    <option value="1">Jan</option><option value="2">Feb</option><option value="3">Mar</option>
+    <option value="4">Apr</option><option value="5">May</option><option value="6">Jun</option>
+    <option value="7">Jul</option><option value="8">Aug</option><option value="9">Sep</option>
+    <option value="10">Oct</option><option value="11">Nov</option><option value="12">Dec</option>
+  </select>
+  <div class="filter-results" id="filter-results">100 targets</div>
+</div>
+
+<!-- CATALOGUE TAB -->
+<div id="panel-catalogue" class="panel active">
+  <div class="table-wrap">
+    <table id="cat-table">
+      <thead>
+        <tr>
+          <th onclick="sortBy('slot')">#<span class="sort-indicator" id="sort-slot">↕</span></th>
+          <th onclick="sortBy('catalogue')">Catalogue<span class="sort-indicator" id="sort-catalogue">↕</span></th>
+          <th onclick="sortBy('name')">Name<span class="sort-indicator" id="sort-name">↕</span></th>
+          <th onclick="sortBy('type')">Type<span class="sort-indicator" id="sort-type">↕</span></th>
+          <th onclick="sortBy('constellation')">Const.<span class="sort-indicator" id="sort-constellation">↕</span></th>
+          <th>RA / Dec</th>
+          <th>Best</th>
+          <th>Rig</th>
+          <th>Hours</th>
+          <th onclick="sortBy('status')">Status<span class="sort-indicator" id="sort-status">↕</span></th>
+        </tr>
+      </thead>
+      <tbody id="cat-body"></tbody>
+    </table>
+    <div class="no-results" id="no-results" style="display:none"><b>✦</b>No targets match your filters</div>
+  </div>
+</div>
+
+<!-- PLANNER TAB -->
+<div id="panel-planner" class="panel">
+  <div class="legend">
+    <div class="legend-item"><div class="dot dot-complete"></div> Complete</div>
+    <div class="legend-item"><div class="dot dot-improve"></div> Improve</div>
+    <div class="legend-item"><div class="dot dot-image"></div> To Image</div>
+    <div class="legend-item"><div class="dot dot-empty" style="width:8px;height:8px;border-radius:50%"></div> Not visible</div>
+  </div>
+  <div class="planner-wrap">
+    <table class="planner-table" id="planner-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Target</th>
+          <th class="month-col-header" data-m="1">Jan</th>
+          <th class="month-col-header" data-m="2">Feb</th>
+          <th class="month-col-header" data-m="3">Mar</th>
+          <th class="month-col-header" data-m="4">Apr</th>
+          <th class="month-col-header" data-m="5">May</th>
+          <th class="month-col-header" data-m="6">Jun</th>
+          <th class="month-col-header" data-m="7">Jul</th>
+          <th class="month-col-header" data-m="8">Aug</th>
+          <th class="month-col-header" data-m="9">Sep</th>
+          <th class="month-col-header" data-m="10">Oct</th>
+          <th class="month-col-header" data-m="11">Nov</th>
+          <th class="month-col-header" data-m="12">Dec</th>
+        </tr>
+      </thead>
+      <tbody id="planner-body"></tbody>
+    </table>
+  </div>
+</div>
+
+</div><!-- content -->
+
+<script>
+const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const CURRENT_MONTH = new Date().getMonth() + 1; // 1-12
+
+const TYPE_CLASS = {
+  'Emission': 't-emission', 'SNR': 't-snr', 'Dark Neb': 't-darkneb',
+  'Cometary Globule': 't-cometaryglobule', 'Reflection': 't-reflection',
+  'OC+Neb': 't-ocneb', 'Globular': 't-globular', 'Plan.Neb': 't-planneb',
+  'Galaxy': 't-galaxy', 'LMC': 't-lmc', 'SMC': 't-smc'
+};
+const STATUS_CLASS = {
+  'Complete': 's-complete', 'Improve': 's-improve',
+  'To Image': 's-image', 'Partial': 's-partial'
+};
+
+// Parse best months string -> array of month numbers
+function parseBest(best) {
+  if (!best || best === '—') return [];
+  if (best === 'All year') return [1,2,3,4,5,6,7,8,9,10,11,12];
+  const months = [];
+  const parts = best.split('–');
+  if (parts.length !== 2) return [];
+  const a = MONTHS.indexOf(parts[0].trim().slice(0,3)) + 1;
+  const b = MONTHS.indexOf(parts[1].trim().slice(0,3)) + 1;
+  if (a < 1 || b < 1) return [];
+  if (a <= b) { for (let m=a; m<=b; m++) months.push(m); }
+  else { for (let m=a; m<=12; m++) months.push(m); for (let m=1; m<=b; m++) months.push(m); }
+  return months;
+}
+
+// ------------------------------------------------------------------
+// DATA (embedded)
+// ------------------------------------------------------------------
+const DATA = [{"slot":1,"catalogue":"NGC 3372","name":"Eta Carinae Nebula","type":"Emission","ra":"10h45m","dec":"-59.9°","size":"120×120","constellation":"Carina","transit_alt":"68°","circumpolar":"Yes","rig":"103APO + 585MC Pro (mosaic)","filter":"D1 + D2 (SHO)","best":"Oct–Apr","status":"To Image","hours":"10 / 20 hrs","notes":"MOSAIC PROJECT — 103APO + 585MC Pro native (1.62\"/px, 0.92°×0.52° per panel). 2-3 panel mosaic centred on Keyhole Nebula and Eta Carinae core complex. Single panel framing insufficient — nebula too vast, wall-to-wall emission with no compositional breathing room. Mosaic approach gives high resolution across the full Keyhole-to-Eta-Car relationship. D1 (Ha+OIII) + D2 (SII+OIII) for full SHO Hubble palette across all panels. Keyhole dark structure as primary compositional anchor — pillar edges and ionisation fronts at 1.62\"/px will be extraordinary. Eta Carinae homunculus (~17\" across) will be clearly elongated at this scale. Multi-session project — plan mosaic overlap carefully in advance. Gabriela Mistral NGC 3324 treated as separate standalone entry #88."},{"slot":2,"catalogue":"NGC 3576","name":"Statue of Liberty + NGC 3603","type":"Emission","ra":"11h13m29.12s","dec":"-61°14'05.4\"","size":"16×27","constellation":"Carina","transit_alt":"67°","circumpolar":"Yes","rig":"103APO + 585MC Pro native","filter":"D1 + D2 SHO","best":"Oct–Apr","status":"To Image","hours":"8 / 15 hrs","notes":"103APO + 585MC Pro native (700mm, 0.92°×0.52° field, 1.62\"/px). Cardinal alignment, rotation 0°. Pointing: RA 11h13m29.12s, Dec -61°14'05.4\". NGC 3603 left-centre — one of the most massive young star clusters in the Milky Way with surrounding nebulosity; NGC 3576 Statue of Liberty right-centre — distinctive curved ionisation fronts and embedded clusters. Two of the most spectacular star-forming regions in Carina as co-equal subjects connected by rich emission lane threading between them across the full frame width. vdBH 47b lower-right bonus. NGC 3582 looping filaments also within field — part of the same RCW 57 complex. 1.62\"/px gives genuine resolution in both nebulae's fine structural detail and the Statue of Liberty's curved pillar edges and ionisation fronts. D1 Ha+OIII primary — HOO palette. Strong emission field. NGC 3603 standalone entry #3 removed — fully captured in this frame."},{"slot":3,"catalogue":"Gum 37","name":"Southern Tadpoles — Gum 37 / SNR G290.6+00.5","type":"Emission","ra":"11h10m41s","dec":"-60°04'32\"","size":"60×50","constellation":"Carina","transit_alt":"68°","circumpolar":"Yes","rig":"103APO + ATR2600c native","filter":"D1 + D2 (SHO)","best":"Mar–Jul","status":"To Image","hours":"20 / 35 hrs","notes":"103APO + ATR2600c native (700mm, 1.92°×1.28° field, 1.11\"/px). Rotation: 136.7° East (diamond orientation). Pointing: RA 11h10m41s, Dec -60°04'32\". Gum 37 / SNR G290.6+00.5 (Southern Tadpoles) — dominant OIII-bright bubble upper-centre of diamond frame. SNR G291.0+00.1 overlapping. NGC 3572 + CL Hogg 10 embedded in emission centre. Sandqvist 127 dark nebula lower diamond as negative space anchor. D1 (Ha+OIII) + D2 (SII+OIII) for full SHO palette."},{"slot":4,"catalogue":"IC 2944","name":"Running Chicken / RCW 62","type":"Emission","ra":"11h36m","dec":"-63.4°","size":"40×20","constellation":"Centaurus","transit_alt":"65°","circumpolar":"Yes","rig":"103APO + ATR2600c 0.8x","filter":"D1 Ha+OIII","best":"Oct–May","status":"To Image","hours":"8 / 15 hrs","notes":"Large complex with rich OIII content. 0.8x reducer gives ideal 3.1° framing. Already in RCW planner."},{"slot":5,"catalogue":"NGC 6334","name":"Cat's Paw Nebula","type":"Emission","ra":"17h20m","dec":"-35.8°","size":"40×30","constellation":"Scorpius","transit_alt":"82°","circumpolar":"No","rig":"103APO + ATR2600c","filter":"D1 Ha+OIII","best":"May–Sep","status":"To Image","hours":"10 / 18 hrs","notes":"Stunning complex of HII regions and dark nebulae. Rises high enough for excellent imaging. Underimaged relative to its quality."},{"slot":6,"catalogue":"NGC 6357","name":"War and Peace Nebula","type":"Emission","ra":"17h26m","dec":"-34.2°","size":"40×30","constellation":"Scorpius","transit_alt":"84°","circumpolar":"No","rig":"103APO + ATR2600c","filter":"D1 Ha+OIII","best":"May–Sep","status":"To Image","hours":"10 / 18 hrs","notes":"Complex of three distinct nebulae. Rich in SII emission. Mosaic opportunity with Cat's Paw in same field."},{"slot":7,"catalogue":"IC 4628","name":"Prawn Nebula / RCW 108","type":"Emission","ra":"16h57m","dec":"-40.3°","size":"60×30","constellation":"Scorpius","transit_alt":"78°","circumpolar":"No","rig":"103APO + ATR2600c","filter":"D1 Ha+OIII","best":"May–Sep","status":"Complete","hours":"Done","notes":"Excellent HOO mosaic. One of your strongest images. ATR2600c revisit optional for added depth."},{"slot":8,"catalogue":"NGC 6559","name":"NGC 6559 Complex","type":"Emission","ra":"18h10m","dec":"-24.1°","size":"35×30","constellation":"Sagittarius","transit_alt":"74°","circumpolar":"No","rig":"103APO + ATR2600c","filter":"D1 + L-Pro","best":"Jun–Sep","status":"Complete","hours":"Done","notes":"Superb image — dark lanes, emission and reflection all beautifully rendered. Keep as benchmark."},{"slot":9,"catalogue":"M 8","name":"Lagoon Nebula","type":"Emission","ra":"18h06m06s","dec":"-24°08'09\"","size":"90×40","constellation":"Sagittarius","transit_alt":"76°","circumpolar":"No","rig":"103APO + ATR2600c + 0.8x","filter":"D1 + D2 (SHO)","best":"Jun–Sep","status":"Improve","hours":"8 / 15 hrs","notes":"103APO + ATR2600c + 0.8x reducer (560mm, 2.40°×1.60° field, 1.39\"/px). Unconventional framing — Lagoon Nebula (M8/NGC 6523) right-centre as warm dominant subject; blue reflection nebulae (IC 1274/1275 region) upper-left as striking cool colour counterpoint; dark molecular cloud complex (LDN 200, LDN 212, Barnard 88, Barnard 296) threading through mid and lower frame."},{"slot":10,"catalogue":"M 20","name":"Trifid Nebula","type":"Emission","ra":"18h03m","dec":"-23.0°","size":"20×20","constellation":"Sagittarius","transit_alt":"75°","circumpolar":"No","rig":"103APO + 585MC Pro native","filter":"L-Pro + D1 Ha+OIII","best":"Jun–Sep","status":"To Image","hours":"6 / 12 hrs","notes":"103APO + 585MC Pro native (700mm, 2.0°×1.1° field, 0.85\"/px). Centred framing — Trifid's symmetric dark lane trifurcation radiates naturally from centre. 585MC Pro chosen over ATR2600c for resolution priority — at 0.85\"/px the three dark dust lanes dividing the emission nebula will be razor sharp."},{"slot":11,"catalogue":"M 17","name":"Omega / Swan Nebula","type":"Emission","ra":"18h18m53.47s","dec":"-16°17'02.47\"","size":"46×37","constellation":"Sagittarius","transit_alt":"68°","circumpolar":"No","rig":"103APO + ATR2600c native","filter":"D1 + D2 (SHO)","best":"Jun–Sep","status":"To Image","hours":"8 / 15 hrs","notes":"103APO + ATR2600c native (700mm, 1.92°×1.28° field, 1.11\"/px). M17 Omega/Swan Nebula left-third as primary subject — characteristic curved emission bar and embedded cluster well placed. SH 2-42, SH 2-44, IC 4701, vdB 120 grouping lower-right as compelling secondary subject."},{"slot":12,"catalogue":"NGC 6188","name":"Fighting Dragons of Ara","type":"Emission","ra":"16h40m","dec":"-48.7°","size":"20×12","constellation":"Ara","transit_alt":"69°","circumpolar":"Yes","rig":"103APO + ATR2600c / 585MC native","filter":"D1 + D2 SHO","best":"May–Sep","status":"Improve","hours":"15 / 25 hrs","notes":"Outstanding SHO result — ionisation front and pillar detail exceptional. 103APO + 585MC native for finest pillar resolution; ATR2600c for SHO depth. One of the finest images in the portfolio."},{"slot":13,"catalogue":"NGC 6164","name":"NGC 6164-65 Bipolar Nebula","type":"Emission","ra":"16h33m44.00s","dec":"-48°04'36.5\"","size":"13×6","constellation":"Ara","transit_alt":"80°","circumpolar":"No","rig":"103APO + 585MC Pro native","filter":"D1 + D2 (SHO)","best":"May–Sep","status":"To Image","hours":"10 / 18 hrs","notes":"NGC 6164 bipolar core is just the small warm heart of a vast OIII-dominant Wolf-Rayet driven bubble — the true scale of the target extends far beyond the catalogued 6×3' bipolar core. Full bubble extent approximately 40-50' across. D1 (Ha+OIII) + D2 (SII+OIII) for full SHO palette — extraordinary OIII bubble dominance."},{"slot":14,"catalogue":"RCW 98","name":"Coffee Bean Nebula","type":"Emission","ra":"15h55m32s","dec":"-54°38'23\"","size":"24×18","constellation":"Norma","transit_alt":"74°","circumpolar":"Yes","rig":"103APO + 585MC Pro","filter":"D1 Ha+OIII","best":"Apr–Sep","status":"To Image","hours":"18 / 25 hrs","notes":"RCW 98 Coffee Bean Nebula — distinctive coffee-bean shaped emission nebula in Norma. Genuinely underimaged frontier target. Reference: 6h50m backyard 10\" monochrome — confirms target viable at amateur level. D1 Ha+OIII. Circumpolar from Ocean Grove."},{"slot":15,"catalogue":"NGC 2467","name":"NGC 2467 Complex","type":"Emission","ra":"7h53m42s","dec":"-26°25'43\"","size":"15×15","constellation":"Puppis","transit_alt":"78°","circumpolar":"No","rig":"103APO + ATR2600c native","filter":"D1 + D2 SHO","best":"Nov–Mar","status":"Improve","hours":"10 / 18 hrs","notes":"NGC 2467 / Sh2-311 — Skull & Crossbones Nebula, Puppis. Previously imaged with 585MC + 0.8x reducer — framing too cramped. Re-image with 103APO + ATR2600c native for better breathing room. D1 + D2 (SHO) for full palette."},{"slot":16,"catalogue":"IC 2177","name":"Seagull Nebula","type":"Emission","ra":"07h07m27s","dec":"-11°03'22\"","size":"120×40","constellation":"Monoceros","transit_alt":"63°","circumpolar":"No","rig":"103APO + ATR2600c + 0.8x","filter":"D1 + D2 (SHO)","best":"Dec–Mar","status":"To Image","hours":"15 / 25 hrs","notes":"2-panel portrait mosaic | 103APO + ATR2600c + 0.8x reducer (560mm, 2.40°×1.60° per panel, 1.39\"/px) | Rotation: 45.0° East. IC 2177 Seagull silhouette requires full 2-panel extent — single panel clips wings. NGC 2327 head region with embedded cluster and dark absorption lane is the photogenic anchor."},{"slot":17,"catalogue":"NGC 2359","name":"Thor's Helmet — Sh2-298 / Gum 4","type":"Emission","ra":"7h18m30s","dec":"-13°13'36\"","size":"30×20","constellation":"Canis Maj","transit_alt":"65°","circumpolar":"No","rig":"103APO + ATR2600c native","filter":"D1 + D2 (SHO)","best":"Nov–Feb","status":"To Image","hours":"10 / 18 hrs","notes":"NGC 2359 / Sh2-298 / Gum 4 — Thor's Helmet. Wolf-Rayet bubble driven by WR 7 (HD 56925) in Canis Major. 103APO + ATR2600c native (700mm, 1.92°×1.28° field, 1.11\"/px). Rotation: 193.8° East. Strong OIII dominant bubble with warm Ha/SII filamentary contrast — exceptional SHO palette candidate."},{"slot":18,"catalogue":"RCW 27","name":"RCW 27 — Sandqvist 1 & NGC 2626","type":"Emission","ra":"8h35m43.63s","dec":"-40°28'33.7\"","size":"115×77","constellation":"Puppis","transit_alt":"88°","circumpolar":"No","rig":"103APO + ATR2600c native","filter":"D1 Ha+OIII + L-Pro","best":"Nov–Mar","status":"To Image","hours":"15 / 25 hrs","notes":"RCW 27 diffuse emission centre-right as primary subject; Sandqvist 1 dark molecular cloud sweeping across left and lower portions as the dominant compositional element. NGC 2626 blue reflection nebula right-centre as cool colour counterpoint. Three distinct object types in a single cohesive composition: emission, dark cloud, reflection."},{"slot":19,"catalogue":"NGC 6820","name":"NGC 6820 Nebula","type":"Emission","ra":"19h43m","dec":"+23.3°","size":"40×30","constellation":"Vulpecula","transit_alt":"29°","circumpolar":"No","rig":"FRA300 + 585MC","filter":"D1 Ha+OIII","best":"Jul–Sep","status":"To Image","hours":"10 / 18 hrs","notes":"Borderline altitude from OG at only 29° — but the pillars and bubble structure around NGC 6823 are spectacular. Winter target."},{"slot":20,"catalogue":"NGC 3199","name":"NGC 3199 Bubble","type":"Emission","ra":"10hr 20' 33\"","dec":"-57°52'47\"","size":"22×17","constellation":"Carina","transit_alt":"70°","circumpolar":"Yes","rig":"103APO + ATR2600c native","filter":"D1 Ha+OIII","best":"Oct–Apr","status":"To Image","hours":"10 / 18 hrs","notes":"NGC 3199 Banana Nebula (Wolf-Rayet bubble driven by WR 18) right-centre — distinctive crescent/banana shape opening leftward; strong OIII emission in shell. Whirling Dervish Nebula (Collinder 220a / WIC) left-centre as warm emission anchor. D1 Ha+OIII — HOO palette."},{"slot":21,"catalogue":"RCW 35/36","name":"RCW 35/36 — Vela Spiral Flame Complex","type":"Emission","ra":"08h55m15.7s","dec":"-43°44'31.3\"","size":"110×90","constellation":"Vela","transit_alt":"84°","circumpolar":"No","rig":"103APO + ATR2600c + 0.8x","filter":"D1 Ha+OIII + L-Pro","best":"Jan–Apr","status":"To Image","hours":"20 / 35 hrs","notes":"103APO + ATR2600c + 0.8x reducer (560mm, 2°24'×1°36' field, 1.39\"/px). RCW 36 left-centre as primary emission anchor — compact bright HII region with embedded cluster; RCW 35 lower-right as secondary emission subject; Vela SNR filaments threading diagonally through the dark cloud complex — the defining structural element in narrowband. Known on AstroBin as \"Vela Spiral Flame + Gum 18/19/20\" — only 2 images exist, both underprocessed."},{"slot":22,"catalogue":"Sh2-308","name":"Dolphin Nebula","type":"Emission","ra":"06h55m","dec":"-23.9°","size":"40×40","constellation":"Canis Maj","transit_alt":"64°","circumpolar":"No","rig":"103APO + ATR2600c native","filter":"L-Pro broadband","best":"Nov–Feb","status":"Improve","hours":"15 / 25 hrs","notes":"Original image completed with FRA300 + 585MC Pro, likely as a mosaic. Reimage with 103APO + ATR2600c native (2.5°×1.7° field) to capture the full context in a single frame. ATR2600c colour fidelity will render the delicate blue reflection tones with significantly more depth."},{"slot":23,"catalogue":"Sh2-312 / LBN 1085","name":"The Concorde Nebula","type":"Emission","ra":"09h24m54.3s","dec":"-27°55'51.5\"","size":"120×80","constellation":"Pyxis","transit_alt":"80°","circumpolar":"No","rig":"103APO + ATR2600c + 0.8x","filter":"D1 Ha+OIII","best":"Jan–Apr","status":"To Image","hours":"15 / 25 hrs","notes":"Sh2-312 / LBN 1085 emission filament — \"The Concorde Nebula\". Part of the vast Sh2-312 complex — AstroBin Image of the Day April 2025. This framing targets the most visually distinctive and structurally rich portion: the Concorde nose arc. Vela SNR outlier filament system discovered during NGC 3132 scouting session."},{"slot":24,"catalogue":"NGC 3372 SW","name":"The Gnome Nebula","type":"Emission","ra":"10h36m46s","dec":"-60°49'29\"","size":"90×70","constellation":"Carina","transit_alt":"67°","circumpolar":"Yes","rig":"103APO + ATR2600c native","filter":"D1 Ha+OIII","best":"Feb–May","status":"To Image","hours":"12 / 20 hrs","notes":"NGC 3372 southwestern sub-field — \"The Gnome Nebula\" — distinct emission structure with unmistakable gnome head morphology: domed head, pronounced nose, full beard with clear chin line, hunched shoulder. Deliberately avoids the over-photographed Keyhole/Eta Car core — captures the texture and character of the southern wall instead."},{"slot":25,"catalogue":"RCW 94 / RCW 95","name":"The Bat Nebula","type":"Emission","ra":"15h43m37s","dec":"-54°08'01\"","size":"~90×60' (framing)","constellation":"Norma","transit_alt":"74°","circumpolar":"Yes","rig":"103APO + 585MC Pro + 0.8x","filter":"D1 Ha+OIII","best":"Apr–Oct","status":"To Image","hours":"20 / 35 hrs","notes":"RCW 94 / RCW 95 complex on the Circinus/Norma border — a vast HII emission complex with striking bat-wing morphology. Extremely underimaged — only 3 images on AstroBin as of March 2026. Very strong Ha, minimal OIII signal — expect HOO palette to be Ha-dominated."},{"slot":26,"catalogue":"RCW 105 / Gum 51","name":"RCW 105","type":"Emission","ra":"16h10m52.42s","dec":"-49°08'01.9\"","size":"~45×35'","constellation":"Norma","transit_alt":"79°","circumpolar":"No","rig":"103APO + ATR2600c native","filter":"D1 Ha+OIII","best":"Apr–Oct","status":"To Image","hours":"15 / 25 hrs","notes":"RCW 105 (Gum 51) — HII emission nebula in Norma, embedded in OB association R105 at ~1580 parsecs. Rich, complex structure with dark intrusions and embedded clusters. Genuinely underimaged target — few AstroBin images exist."},{"slot":27,"catalogue":"NGC 3324","name":"Gabriela Mistral Nebula + Gem Cluster + SNR G286.8","type":"Emission","ra":"10h37m20.0s","dec":"-58°38'30.0\"","size":"40×30","constellation":"Carina","transit_alt":"70°","circumpolar":"Yes","rig":"103APO + ATR2600c native","filter":"D1 + D2 (SHO)","best":"Mar–Jul","status":"Partial","hours":"15 / 25 hrs","notes":"Gabriela Mistral Nebula (NGC 3324 / IC 2599) centre — distinctive emission arc. Gem Cluster (NGC 3293) upper-right third. SNR G286.8+00.0 centre-left — confirmed optically detectable in amateur narrowband OIII data. Three distinct object types in one frame. Imaging underway — 3hrs D1 (Ha+OIII) captured to date with new framing (Mar 2026)."},{"slot":28,"catalogue":"RCW 32","name":"RCW 32 / Ced 106n — Gum 15","type":"Emission","ra":"08h44m54.9s","dec":"-41°18'19.5\"","size":"55×31","constellation":"Vela","transit_alt":"87°","circumpolar":"No","rig":"103APO + 585MC Pro native","filter":"D1 Ha+OIII + L-Pro","best":"Jan–Apr","status":"To Image","hours":"10 / 18 hrs","notes":"RCW 32 (Gum 15) as primary subject — bright emission nebula with dramatic dark absorption lanes. Ced 106n embedded reflection nebula within the complex — requires L-Pro to render. Multi-component field: emission + reflection + dark absorption + embedded cluster all within the 585MC Pro native FOV."},{"slot":29,"catalogue":"Sh2-54","name":"Sh2-54 — Serpens Emission Nebula","type":"Emission","ra":"18hr 18' 58\"","dec":"-11º 57' 20\"","size":"40×30","constellation":"Serpens","transit_alt":"83°","circumpolar":"No","rig":"103APO + ATR2600c native","filter":"D1 Ha+OIII","best":"May–Sep","status":"To Image","hours":"15 / 25 hrs","notes":"Sh2-54 bright emission core upper-right third; LDN 394 dark nebula anchoring lower-left as powerful compositional counterpoint — dark void against warm emission gives the image immediate tension and visual depth. At 83° transit altitude this is essentially a zenith target from Ocean Grove."},{"slot":30,"catalogue":"NGC 2736","name":"Pencil Nebula — Vela SNR filament","type":"SNR","ra":"9h00m12.22s","dec":"-45°57'16.2\"","size":"20×0.5","constellation":"Vela","transit_alt":"82°","circumpolar":"No","rig":"103APO + 585MC Pro native","filter":"D1 Ha+OIII","best":"Nov–Mar","status":"To Image","hours":"10 / 18 hrs","notes":"103APO + 585MC Pro native (700mm, 2.0°×1.1° field, 0.85\"/px). Pencil Nebula filament runs naturally along the long diagonal axis of the rotated frame — elegant composition with the sharp shock front edge and fainter trailing emission well captured at 0.85\"/px. 585MC Pro chosen for maximum resolution on fine filamentary structure."},{"slot":31,"catalogue":"Vela SNR","name":"Vela Supernova Remnant — Vela XYZ / Gum 16","type":"SNR","ra":"8h34m12s","dec":"-44°23'37\"","size":"269×179","constellation":"Vela","transit_alt":"84°","circumpolar":"No","rig":"FRA300 + ATR2600c native","filter":"D1 Ha+OIII","best":"Nov–Mar","status":"To Image","hours":"18 / 30 hrs","notes":"FRA300 + ATR2600c native (300mm, 4.48°×2.99° field, 2.60\"/px). Vela XYZ region centre-right as primary subject — one of the most structurally rich sections of the Vela SNR. HOO palette — extraordinary blue OIII filaments against warm red Ha background."},{"slot":32,"catalogue":"Uncatalogued","name":"Antlia Shockfront","type":"SNR","ra":"09h56m37.46s","dec":"-41°16'12.6\"","size":"~90×70' (framing)","constellation":"Antlia","transit_alt":"87°","circumpolar":"No","rig":"103APO + ATR2600c native","filter":"D1 Ha+OIII","best":"Nov–Apr","status":"To Image","hours":"15 / 25 hrs","notes":"Uncatalogued Vela SNR outlier filament system in Antlia — no LBN, RCW, or other catalogue designation found. Classic SNR shockfront morphology — ionised gas swept up by the expanding Vela SNR blast wave. Full wide-field mosaic of the complete system banked as a standalone project."},{"slot":33,"catalogue":"Uncatalogued","name":"The Javelin Nebula","type":"SNR","ra":"10h18m30.31s","dec":"-37°50'33.3\"","size":"~90×70' (framing)","constellation":"Antlia","transit_alt":"90°","circumpolar":"No","rig":"103APO + ATR2600c native","filter":"D1 Ha+OIII","best":"Nov–Apr","status":"To Image","hours":"20 / 35 hrs","notes":"Uncatalogued Vela SNR outlier filament in Antlia — single narrow, knife-edged linear filament running perpendicular to the Antlia Shockfront (#32). Extremely faint on DSS red plates. Frame sits within the outskirts of the Antlia Galaxy Cluster (Abell S0636)."},{"slot":34,"catalogue":"Sandqvist 17 / SNR G342.1+00.9 / G342.0-00.2 / G341.9-00.3 / G341.2+00.9","name":"Norma's Split Lip","type":"SNR","ra":"16h51m40s","dec":"-43°30'44\"","size":"75×48","constellation":"Scorpius","transit_alt":"85°","circumpolar":"No","rig":"103APO + ATR2600c","filter":"D1 Ha+OIII","best":"Jun–Aug","status":"To Image","hours":"12 / 25 hrs","notes":"Extraordinary dark nebula and supernova remnant complex in Scorpius. Sandqvist 17 dramatic dark complex centre-left frame; large opaque core with multiple dark pillars extending downward, sharply silhouetted against the SNR emission background. Four supernova remnants within or overlapping the frame. Zero AstroBin images — frontier target."},{"slot":35,"catalogue":"TBD","name":"— Vela SNR sub-region (pending Chadwick & Cooper reference) —","type":"SNR","ra":"—","dec":"—","size":"—","constellation":"—","transit_alt":"—","circumpolar":"—","rig":"—","filter":"—","best":"—","status":"To Image","hours":"—","notes":"G296.1-0.5 removed — only a possible SNR, no evidence of amateur detectability. Replacement: a specific named Vela SNR sub-region to be selected using Chadwick & Cooper 'Imaging the Southern Sky' sub-region reference chart."},{"slot":36,"catalogue":"Sandqvist 169","name":"The Prancing Horse Nebula","type":"Dark Neb","ra":"15h07m49s","dec":"-62°51'12\"","size":"120×90","constellation":"Circinus","transit_alt":"65°","circumpolar":"Yes","rig":"103APO + ATR2600c 0.8x","filter":"L-Pro broadband","best":"Apr–Aug","status":"To Image","hours":"12 / 20 hrs","notes":"Sandqvist 169/171/172 Circinus Dark Nebula Complex — extraordinary concentration of dark nebulae in Circinus against the rich southern Milky Way. vdBH 66 reflection nebula centre-left; vdBH 65b reflection nebula lower-right. HH 76 and HH 139 Herbig-Haro objects embedded. Genuinely underimaged frontier target."},{"slot":37,"catalogue":"Sandqvist 111","name":"Sandqvist 111 — Gum Nebula Dark Nebula","type":"Dark Neb","ra":"08h26m46s","dec":"-51°02'05\"","size":"30×20","constellation":"Vela","transit_alt":"77°","circumpolar":"No","rig":"103APO + 585MC Pro","filter":"L-Pro + D1 Ha","best":"Nov–Mar","status":"To Image","hours":"15 / 25 hrs","notes":"Sandqvist 111 — dark nebula in the southeast quadrant of the Gum Nebula. Dark tendril silhouette against faint but unmistakable Ha emission background from the Gum Nebula. HH 46-47 Herbig-Haro objects associated with newborn stars embedded in the cloud."},{"slot":38,"catalogue":"Sandqvist 16","name":"Cosmic Chicken's Foot","type":"Dark Neb","ra":"16h25m16.4s","dec":"-40°22'13.1\"","size":"40×30","constellation":"Scorpius","transit_alt":"88°","circumpolar":"No","rig":"103APO + ATR2600c native","filter":"L-Pro","best":"Apr–Aug","status":"To Image","hours":"10 / 18 hrs","notes":"Sandqvist 16 dark nebula complex — distinctive elongated hooked morphology: central dark lane (the leg) with branching tendril extensions (the toes). C75 (NGC 6124) rich open cluster lower-centre as primary compositional counterpoint. No AstroBin images found under Sandqvist 16 — genuine frontier target."},{"slot":39,"catalogue":"Sandqvist 115","name":"The Lizard","type":"Dark Neb","ra":"09h23m24.5s","dec":"-46°12'46.8\"","size":"80×45","constellation":"Vela","transit_alt":"82°","circumpolar":"No","rig":"103APO + ATR2600c native","filter":"L-Pro","best":"Jan–Apr","status":"To Image","hours":"10 / 18 hrs","notes":"Sandqvist 115 dark nebula — \"The Lizard\" — sinuous dark tendril with distinctive lizard/snake morphology upper-right of frame, set against an extraordinarily rich pervasive fine dust field. Zero dedicated AstroBin images of Sandqvist 115 — genuine frontier target."},{"slot":40,"catalogue":"Dobashi 6251 / SNR G320.6-01.6","name":"The Fishhook Nebula","type":"Dark Neb","ra":"15h17m29s","dec":"-59°21'50\"","size":"115×77","constellation":"Circinus","transit_alt":"69°","circumpolar":"Yes","rig":"103APO + ATR2600c native","filter":"D1 Ha+OIII","best":"Apr–Aug","status":"To Image","hours":"15 / 25 hrs","notes":"Dark lane Dobashi 6251 — fishhook-shaped silhouette — as primary compositional subject, backlit by overlapping dual SNR emission. AstroBin: CDK17/20/24 images of RCW 89 knot detail exist but zero wide-field compositional framings — genuine frontier target."},{"slot":41,"catalogue":"TGU H1886 / Cha III","name":"The Wraith Nebula","type":"Dark Neb","ra":"12h42m16s","dec":"-80°26'54\"","size":"144×96","constellation":"Chamaeleon","transit_alt":"48°","circumpolar":"Yes","rig":"FRA300 + ATR2600c","filter":"L-Pro broadband","best":"All year","status":"To Image","hours":"12 / 20 hrs","notes":"FRA300 + ATR2600c native (300mm, 4°29'×2°59' field, 2.596\"/px). Single-panel crop of the Chamaeleon III molecular cloud complex capturing the most compositionally striking portion — a sweeping dark nebula form with hooded head, billowing body and trailing lower wisps giving a distinctive wraith/spectral figure morphology."},{"slot":42,"catalogue":"Sandqvist 149","name":"Dark Doodad Nebula","type":"Dark Neb","ra":"12h39m07.91s","dec":"-71°25'00.2\"","size":"180×20","constellation":"Musca","transit_alt":"57°","circumpolar":"Yes","rig":"FRA300 + ATR2600c","filter":"L-Pro broadband","best":"Mar–Jul","status":"To Image","hours":"12 / 20 hrs","notes":"Dark Doodad Nebula (Sandqvist 149) — one of the finest dark nebulae in the southern sky. Sinuous serpentine dust lane ~3° long running diagonally through the rich Musca Milky Way field. NGC 4372 (C108) globular cluster at southern end as luminous anchor. Exclusively southern — Dec -71°, circumpolar from Ocean Grove."},{"slot":43,"catalogue":"Bernes 149","name":"Bernes 149 / Lupus 3","type":"Dark Neb","ra":"16h09m11.15s","dec":"-39°08'33.4\"","size":"90×60","constellation":"Scorpius","transit_alt":"89°","circumpolar":"No","rig":"103APO + ATR2600c 0.8x","filter":"L-Pro broadband","best":"Apr–Aug","status":"To Image","hours":"12 / 20 hrs","notes":"Bernes 149 / Lupus 3 — reflection nebula embedded in dark cloud complex. Two young proto-stars HR 5999 and HR 6000 illuminate the surrounding dust creating a brilliant blue reflection nebula set against warm brown-orange dark cloud tendrils. One of the most visually striking dark/reflection nebula combinations in the southern sky."},{"slot":44,"catalogue":"B 68","name":"Barnard 68 Complex","type":"Dark Neb","ra":"17h24m22s","dec":"-23°57'02\"","size":"120×80","constellation":"Ophiuchus","transit_alt":"76°","circumpolar":"No","rig":"103APO + ATR2600c 0.8x","filter":"L-Pro broadband","best":"May–Sep","status":"To Image","hours":"12 / 20 hrs","notes":"Barnard 68 Complex — extraordinary concentration of dark nebulae in Ophiuchus. Single frame captures B68 (Ink Spot Nebula), B72 (Snake Nebula), B69, B70, B74, B76, B77, LDN 70, B255, NGC 6325 all within the field."},{"slot":45,"catalogue":"GN 16.43.7","name":"Dark Tower Nebula","type":"Dark Neb","ra":"16h45m41s","dec":"-41°06'41\"","size":"42×29","constellation":"Scorpius","transit_alt":"87°","circumpolar":"No","rig":"103APO + ATR2600c","filter":"L-Pro + D1 Ha+OIII","best":"Apr–Aug","status":"To Image","hours":"15 / 25 hrs","notes":"Dark Tower Nebula (GN 16.43.7 / SFO 82 / vdBH 73) — dramatic cometary dark nebula in Scorpius. Tower silhouette sculpted by intense UV radiation from hot OB stars in NGC 6231 / Sco OB1 association. Reference: Martin Pugh CDK17 + 27h40m HaLRGB — APOD x3."},{"slot":46,"catalogue":"GDC 1 / ESO 210-6A","name":"Batman's Overwatch","type":"Dark Neb","ra":"8h26m35s","dec":"-50°59'47\"","size":"55×31","constellation":"Vela","transit_alt":"77°","circumpolar":"No","rig":"103APO + ASI585MC Pro","filter":"D1 Ha+OIII / L-Pro","best":"Jan–Apr","status":"To Image","hours":"15 / 25 hrs","notes":"Rich dark nebula complex in the Gum Nebula system. GDC 1 (Bok's Valentine Nebula) hosting HH 46/47, famously imaged by JWST in 2023. BHR 34 — the Batman structure itself, looming over the GDC complex in upper frame. Zero AstroBin images of this complex — genuine frontier target."},{"slot":47,"catalogue":"Sandqvist 187/188","name":"The Rhinoceros","type":"Dark Neb","ra":"16h34m54s","dec":"-45°01'18\"","size":"75×48","constellation":"Norma","transit_alt":"83°","circumpolar":"No","rig":"103APO + ATR2600c","filter":"L-Pro broadband","best":"Jun–Aug","status":"To Image","hours":"10 / 20 hrs","notes":"Sandqvist 187/188 — three-component dark filament complex in Norma, running E-W along Dec ~−45°00'. The central + eastern clouds form a convincing rhinoceros silhouette in DSS Red: prominent upward horn, well-defined head profile, and body mass. Zero AstroBin images of this complex — genuine frontier target."},{"slot":48,"catalogue":"Ced 111","name":"Chamaeleon I — Ced 110 & Ced 111","type":"Dark Neb","ra":"11h05m46s","dec":"-77°02'53\"","size":"120×90","constellation":"Chamaeleon","transit_alt":"51°","circumpolar":"Yes","rig":"103APO + ATR2600c 0.8x","filter":"L-Pro broadband","best":"All year","status":"To Image","hours":"12 / 20 hrs","notes":"Chamaeleon I molecular cloud — Ced 110 and Ced 111 reflection nebulae embedded in dramatic dark cloud complex. Contains Herbig-Haro objects HH 49-50 between the two reflection nebulae. Circumpolar from Ocean Grove."},{"slot":49,"catalogue":"B228","name":"Barnard 228 — Dark Wolf Nebula","type":"Dark Neb","ra":"15h44m","dec":"-34.4°","size":"80×310","constellation":"Lupus","transit_alt":"74°","circumpolar":"No","rig":"FRA300 + ATR2600c","filter":"L-Pro broadband","best":"Apr–Aug","status":"To Image","hours":"12 / 20 hrs","notes":"FRA300 + ATR2600c native (4.76° field). Cardinal-aligned landscape framing — wolf silhouette lower-centre with deliberate space above to capture the substantial upper dust complex."},{"slot":50,"catalogue":"CG 4","name":"God's Hand Cometary Globule","type":"Cometary Globule","ra":"7h34m13s","dec":"-46°56'45\"","size":"30×10","constellation":"Puppis","transit_alt":"81°","circumpolar":"No","rig":"103APO + ASI585MC Pro","filter":"L-Pro broadband / Ha","best":"Jan–Mar","status":"To Image","hours":"12 / 20 hrs","notes":"CG 4 (Sa 101) — cometary globule in the Gum Nebula complex, Puppis. Known as \"God's Hand\": dense dusty head with open mouth framing background galaxy ESO 257-19 / PGC 21338 (mag 12.48, ~83 Mly) in a striking apparent interaction — the galaxy appears to be swallowed by the globule."},{"slot":51,"catalogue":"CG 1","name":"The Dolphin","type":"Cometary Globule","ra":"7h18m14.72s","dec":"-44°34'26.6\"","size":"23x5","constellation":"Puppis","transit_alt":"84°","circumpolar":"No","rig":"103APO + 585MC Pro","filter":"L-Pro broadband","best":"Jan–Apr","status":"To Image","hours":"10 / 15 hrs","notes":"CG 1 — cometary globule in the Gum Nebula system, Puppis. Known in the literature as the \"dolphin shaped globule\" (ESO Messenger 1989). Zero AstroBin images — genuine frontier target."},{"slot":52,"catalogue":"CG 2","name":"The Tadpole","type":"Cometary Globule","ra":"7h14m53s","dec":"-43°57'43\"","size":"18×5","constellation":"Puppis","transit_alt":"84°","circumpolar":"No","rig":"103APO + ASI585MC Pro","filter":"L-Pro broadband / Ha","best":"Jan–Mar","status":"To Image","hours":"10 / 15 hrs","notes":"CG 2 — cometary globule in the Gum Nebula system, Puppis. Distinctive composition: globule head positioned at the edge of a rich Ha emission region, creating a striking asymmetry — dark opaque head silhouetted against bright Ha curtain on one side, open dark sky on the other."},{"slot":53,"catalogue":"NGC 5367","name":"NGC 5367 / CG12 — Cometary Globule","type":"Cometary Globule","ra":"14h00m20.36s","dec":"-40°34'40.7\"","size":"20×15","constellation":"Centaurus","transit_alt":"88°","circumpolar":"No","rig":"103APO + ATR2600c native","filter":"L-Pro broadband","best":"Mar–Jul","status":"To Image","hours":"12 / 20 hrs","notes":"NGC 5367 reflection nebula and CG12 cometary globule head in upper-right third, brown dust tail sweeping diagonally leftward and downward through the frame. NGC 5408 dwarf irregular galaxy lower-left adds unexpected depth."},{"slot":54,"catalogue":"IC 4592","name":"Blue Horsehead Nebula","type":"Reflection","ra":"16h12m","dec":"-19.4°","size":"90×60","constellation":"Scorpius","transit_alt":"59°","circumpolar":"No","rig":"TBD — mosaic framing pending","filter":"L-Pro broadband","best":"May–Aug","status":"Improve","hours":"10 / 18 hrs","notes":"Existing image captured with FRA300 + 585MC Pro as mosaic. Reprocessing of existing data recommended first. Reimage with ATR2600c planned — full extent of IC 4592 likely requires a 4-panel mosaic with FRA300 + ATR2600c native. L-Pro broadband only — pure reflection nebula, no narrowband benefit."},{"slot":55,"catalogue":"IC 2631","name":"Chamaeleon Cloud / IC 2631","type":"Reflection","ra":"12h04m","dec":"-76.6°","size":"60×60","constellation":"Chamaeleon","transit_alt":"51°","circumpolar":"Yes","rig":"103APO + ATR2600c","filter":"L-Pro broadband","best":"Jan–Jun","status":"Improve","hours":"8 / 15 hrs","notes":"Existing image good but composition unsatisfying. Revisit with ATR2600c for wider FOV. Reframe with dark cloud sweeping from upper-right into the reflection nebula."},{"slot":56,"catalogue":"RCW 75","name":"RCW 75 / Gum 48a Elephant Trunk","type":"Reflection","ra":"13h19m15s","dec":"-62°38'53\"","size":"45×30","constellation":"Centaurus","transit_alt":"66°","circumpolar":"Yes","rig":"103APO + ATR2600c 0.8x","filter":"L-Pro broadband","best":"Mar–Aug","status":"To Image","hours":"15 / 25 hrs","notes":"RCW 75 / Gum 48a — elephant trunk reflection nebula complex in Centaurus. Rich multi-catalogue field: VdBH 60a, 60b, 60c reflection nebulae clustered around the bright emission core; Stock 16 open cluster ionising the region. Dramatic dark cloud sweeps in from lower-left, funnelling up to the bright elephant trunk core."},{"slot":57,"catalogue":"IC 4603 / IC 4604 / IC 4605 / IC 4606 / vdB 107 / Sh2-9","name":"The Cosmic Disco","type":"Reflection","ra":"16h37m45s","dec":"-27°05'13\"","size":"270×180","constellation":"Ophiuchus / Scorpius","transit_alt":"79°","circumpolar":"No","rig":"FRA300 + ATR2600c native","filter":"L-Pro broadband","best":"May–Aug","status":"To Image","hours":"12 / 20 hrs","notes":"FRA300 + ATR2600c native (300mm, 4°29'×2°59' field). Three-colour reflection/emission showcase: blue-purple Rho Oph molecular cloud complex (IC 4603, IC 4604, IC 4605) upper frame; golden-yellow Antares reflection halo (IC 4606 / vdB 107) lower left; red Sh2-9 emission around Alniyat right side."},{"slot":58,"catalogue":"NGC 6726","name":"NGC 6726-7 Reflection","type":"Reflection","ra":"19h01m","dec":"-36.9°","size":"30×20","constellation":"Corona Aus","transit_alt":"81°","circumpolar":"No","rig":"103APO + ATR2600c","filter":"L-Pro broadband","best":"Jun–Sep","status":"Complete","hours":"Done","notes":"NGC 6726-7 Corona Australis reflection complex beautifully captured. Dark molecular cloud sweep is dramatic. Underimaged gem."},{"slot":59,"catalogue":"NGC 6729","name":"NGC 6729 — R CrA Nebula & NGC 6723","type":"Reflection","ra":"19h00m17.23s","dec":"-36°53'59.5\"","size":"20×15","constellation":"Corona Aus","transit_alt":"89°","circumpolar":"No","rig":"103APO + ATR2600c native","filter":"L-Pro broadband","best":"Jun–Sep","status":"To Image","hours":"12 / 20 hrs","notes":"NGC 6729 R CrA variable reflection nebula left-centre, NGC 6723 (Chandelier Cluster) globular upper-right, CrA dark molecular cloud sweeping in powerfully from left. R CrA is a variable star — the fan nebula brightness will differ from any reference image depending on capture date."},{"slot":60,"catalogue":"IC 2395","name":"IC 2395 — Vela OB2 Emission Field","type":"OC+Neb","ra":"8h42m33s","dec":"-48°06'14\"","size":"7×7","constellation":"Vela","transit_alt":"80°","circumpolar":"No","rig":"103APO + ATR2600c","filter":"L-Pro broadband / Ha","best":"Jan–Apr","status":"To Image","hours":"12 / 20 hrs","notes":"IC 2395 (Cr 192 / Ced 106m / vdB-Ha 47) — sparse open cluster embedded in rich, complex Vela OB2 Ha emission field. The cluster itself is modest but the surrounding nebulosity is the real subject. NGC 2660 and NGC 2670 galaxies visible in field as bonus depth targets."},{"slot":61,"catalogue":"NGC 3532","name":"Wishing Well Cluster","type":"OC+Neb","ra":"11h05m34s","dec":"-59°02'53\"","size":"55×55","constellation":"Carina","transit_alt":"69°","circumpolar":"Yes","rig":"103APO + ATR2600c","filter":"L-Pro + D1 Ha+OIII","best":"Oct–Apr","status":"To Image","hours":"10 / 18 hrs","notes":"NGC 3532 Wishing Well Cluster — one of the finest open clusters in the sky, described by John Herschel as the most brilliant cluster he had ever seen. Pointing shifted south of cluster centre to bring RCW 54 emission nebula into lower frame."},{"slot":62,"catalogue":"IC 2602","name":"Southern Pleiades","type":"OC+Neb","ra":"10h44m26s","dec":"-64°24'19\"","size":"100×100","constellation":"Carina","transit_alt":"64°","circumpolar":"Yes","rig":"103APO + ATR2600c 0.8x","filter":"L-Pro broadband","best":"Oct–Apr","status":"To Image","hours":"8 / 15 hrs","notes":"IC 2602 Southern Pleiades — the southern hemisphere answer to the Pleiades, dominated by brilliant blue-white stars including naked-eye Theta Carinae. Rich reflection nebulosity associated with the bright cluster members. ATR2600c 16-bit depth essential for managing dynamic range."},{"slot":63,"catalogue":"Cr 147","name":"Collinder 147 / Mel 66 — Dobashi Dust Complex","type":"OC+Neb","ra":"7h27m44s","dec":"-47°52'55\"","size":"10×10","constellation":"Puppis","transit_alt":"80°","circumpolar":"No","rig":"103APO + ATR2600c","filter":"L-Pro broadband","best":"Jan–Mar","status":"To Image","hours":"12 / 20 hrs","notes":"Cr 147 (Mel 66) — rich open cluster in Puppis, embedded in the Dobashi 5242/5245 dust complex. The dust structure dominates the frame as a striking orange-brown molecular cloud against the rich Milky Way star field. Only one known AstroBin image."},{"slot":64,"catalogue":"NGC 2547","name":"NGC 2547 + emission field","type":"OC+Neb","ra":"08h10m","dec":"-49.2°","size":"25×25","constellation":"Vela","transit_alt":"79°","circumpolar":"No","rig":"103APO + ATR2600c","filter":"L-Pro + D1","best":"Nov–Mar","status":"Complete","hours":"10 / 18 hrs","notes":"Blue cluster against faint red nebulosity — striking contrast. Clean star rendering."},{"slot":65,"catalogue":"RCW 110/111 / vdBH 76/79a / NGC 6250","name":"Norma Goody Bag","type":"OC+Neb","ra":"16h56m42s","dec":"-45°35'33\"","size":"75×48","constellation":"Norma","transit_alt":"83°","circumpolar":"No","rig":"103APO + ATR2600c","filter":"D1 Ha+OIII / L-Pro","best":"Jun–Aug","status":"To Image","hours":"12 / 25 hrs","notes":"RCW 110/111 / vdBH 76/79a / NGC 6250 — exceptional multi-character combination field in Norma, containing emission nebulae, reflection nebulae, open cluster, and structured dark lanes in a single 103APO frame. Every major nebula character type represented. Zero AstroBin images of this combination — frontier target."},{"slot":66,"catalogue":"Tr 14+16","name":"Trumpler 14 + 16 — Eta Carinae Clusters","type":"OC+Neb","ra":"10h44m","dec":"-59.8°","size":"30×20","constellation":"Carina","transit_alt":"68°","circumpolar":"Yes","rig":"103APO + ATR2600c native","filter":"D1 + L-Pro","best":"Oct–Apr","status":"To Image","hours":"6 / 12 hrs","notes":"Trumpler 14 and Trumpler 16 separated by only ~20' — treated as a single target. Trumpler 16 contains Eta Carinae itself; Trumpler 14 is the younger, denser cluster to the northwest. Both embedded in the broader Eta Carinae nebula complex."},{"slot":67,"catalogue":"NGC 6231","name":"NGC 6231 — Scorpius OB Association","type":"OC+Neb","ra":"16h35m14.05s","dec":"-42°55'03\"","size":"15×15","constellation":"Scorpius","transit_alt":"85°","circumpolar":"No","rig":"103APO + ATR2600c native","filter":"L-Pro + optional Ha","best":"May–Sep","status":"To Image","hours":"6 / 12 hrs","notes":"NGC 6231 cluster upper-left third, Zeta 1 and Zeta 2 Scorpii as warm orange-gold anchor pair centre-left. The real subject is the extraordinary warm brown-orange Scorpius dust complex filling the frame. Proximity to IC 4628 Prawn Nebula makes this a natural companion image."},{"slot":68,"catalogue":"NGC 2516","name":"NGC 2516 — Southern Beehive","type":"OC+Neb","ra":"07h50m19.67s","dec":"-60°01'54.5\"","size":"30×30","constellation":"Carina","transit_alt":"68°","circumpolar":"Yes","rig":"FRA300 + ATR2600c","filter":"L-Pro broadband","best":"Nov–Mar","status":"To Image","hours":"5 / 10 hrs","notes":"Landscape framing — NGC 2516 cluster in lower-left third, IC 2220 Toby Jug Nebula (bipolar reflection nebula around V341 Car) in upper-right. Carina dust lanes thread between them giving a three-way colour story: blue-white cluster stars, warm golden field stars, grey-brown dust."},{"slot":69,"catalogue":"NGC 5139","name":"Omega Centauri","type":"Globular","ra":"13h27m","dec":"-47.5°","size":"55×55","constellation":"Centaurus","transit_alt":"80°","circumpolar":"Yes","rig":"103APO + ATR2600c","filter":"L-Pro broadband","best":"Mar–Jul","status":"Complete","hours":"5 / 10 hrs","notes":"World-class image. Gold red giant population against blue younger stars is exceptional. Finest globular in the sky — done justice."},{"slot":70,"catalogue":"NGC 6388","name":"NGC 6388","type":"Globular","ra":"17h36m27s","dec":"-44°45'07\"","size":"9×9","constellation":"Scorpius","transit_alt":"83°","circumpolar":"No","rig":"103APO + ATR2600c","filter":"L-Pro + D1 Ha","best":"Apr–Sep","status":"To Image","hours":"10 / 18 hrs","notes":"NGC 6388 — unusually metal-rich globular cluster in Scorpius with distinctive warm golden stellar population. Surrounded by subtle but confirmed Ha nebulosity rippling through the field — elevating this well beyond a pure globular cluster image."},{"slot":71,"catalogue":"NGC 6752","name":"NGC 6752","type":"Globular","ra":"19h11m","dec":"-59.9°","size":"25×25","constellation":"Pavo","transit_alt":"68°","circumpolar":"Yes","rig":"103APO + ATR2600c","filter":"L-Pro broadband","best":"Jun–Oct","status":"To Image","hours":"5 / 10 hrs","notes":"One of the nearest globular clusters — individual stars resolved to the core. Underrated southern showpiece."},{"slot":72,"catalogue":"NGC 6397","name":"NGC 6397","type":"Globular","ra":"17h41m","dec":"-53.7°","size":"31×31","constellation":"Ara","transit_alt":"74°","circumpolar":"Yes","rig":"103APO + ATR2600c","filter":"L-Pro broadband","best":"May–Sep","status":"To Image","hours":"5 / 10 hrs","notes":"The nearest globular cluster to Earth. Stars resolved right to the centre at 700mm. Essential southern object."},{"slot":73,"catalogue":"NGC 5946 / NGC 5927","name":"Two Mates of Norma","type":"Globular","ra":"15h31m00s","dec":"-50°40'12\"","size":"3×2 / 8×6","constellation":"Norma","transit_alt":"78°","circumpolar":"No","rig":"103APO + ATR2600c","filter":"L-Pro broadband","best":"May–Jul","status":"To Image","hours":"8 / 15 hrs","notes":"Paired globular clusters in Norma, sharing the same 103APO field. NGC 5946 left-centre; NGC 5927 right — substantially larger, brighter, more richly resolved. Both embedded in the extraordinarily rich Norma star cloud background. Very few dedicated images on AstroBin — frontier territory."},{"slot":74,"catalogue":"NGC 7293","name":"Helix Nebula","type":"Plan.Neb","ra":"22h29m38s","dec":"-20°50'14\"","size":"28×16","constellation":"Aquarius","transit_alt":"73°","circumpolar":"No","rig":"103APO + ATR2600c","filter":"D1 Ha+OIII","best":"Jul–Nov","status":"Improve","hours":"15 / 25 hrs","notes":"NGC 7293 Helix Nebula — largest apparent planetary nebula in the sky at 28×16'. Extraordinary HOO target: brilliant blue OIII inner ring against warm Ha outer halo. Existing 585MC Pro HOO data captured but result unsatisfactory — fresh start with ATR2600c."},{"slot":75,"catalogue":"NGC 1097","name":"NGC 1097","type":"Galaxy","ra":"02h46m18s","dec":"-30°16'44\"","size":"9×6","constellation":"Fornax","transit_alt":"82°","circumpolar":"No","rig":"103APO + 585MC Pro","filter":"L-Pro broadband","best":"Sep–Jan","status":"To Image","hours":"12 / 20 hrs","notes":"NGC 1097 — grand design barred Seyfert galaxy in Fornax. Extraordinary target: prominent bar, glowing inner ring of hundreds of star-forming regions surrounding the active nucleus, and optical jets — remains of a cannibalized dwarf galaxy."},{"slot":76,"catalogue":"NGC 1291","name":"Snow Collar Galaxy","type":"Galaxy","ra":"3h17m22.65s","dec":"-41°07'04.6\"","size":"10×9","constellation":"Eridanus","transit_alt":"87°","circumpolar":"No","rig":"103APO + 585MC Pro native","filter":"L-Pro broadband","best":"Sep–Jan","status":"To Image","hours":"10 / 18 hrs","notes":"Striking ringed barred spiral — the prominent outer ring (snow collar) is the defining visual feature, bold and well-defined enough to render compellingly at 1.62\"/px. Very underimaged target — the snow collar morphology is dramatic and unlike most spirals."},{"slot":77,"catalogue":"Abell S0636","name":"Antlia Galaxy Cluster","type":"Galaxy","ra":"10h30m14.3s","dec":"-35°17'34.8\"","size":"~120×120' (cluster extent)","constellation":"Antlia","transit_alt":"87°","circumpolar":"No","rig":"103APO + 585MC Pro + 0.8x","filter":"L-Pro / Broadband","best":"Nov–Apr","status":"To Image","hours":"15 / 25 hrs","notes":"Antlia Galaxy Cluster — Abell S0636 — one of the three nearest galaxy clusters after Virgo and Fornax. Core dominated by two giant ellipticals NGC 3258 and NGC 3268 as co-equal subjects. Extraordinary galaxy density across the full field."},{"slot":78,"catalogue":"ESO 97-G13","name":"Circinus Galaxy","type":"Galaxy","ra":"14h13m10s","dec":"-65°20'20\"","size":"~6×3'","constellation":"Circinus","transit_alt":"63°","circumpolar":"Yes","rig":"103APO + 585MC Pro native","filter":"L-Pro","best":"Apr–Sep","status":"To Image","hours":"15 / 25 hrs","notes":"ESO 97-G13 — the Circinus Galaxy, one of the nearest Seyfert 2 galaxies (~4 Mpc). Only ~4° above the galactic equator — heavy dust obscuration from our own galaxy, giving it a distinctive warm, reddened, orange-tinged appearance unique among nearby galaxies."},{"slot":79,"catalogue":"NGC 5128","name":"Centaurus A","type":"Galaxy","ra":"13h26m","dec":"-43.0°","size":"25×20","constellation":"Centaurus","transit_alt":"75°","circumpolar":"Yes","rig":"103APO + ATR2600c","filter":"L-Pro + Ha","best":"Mar–Jul","status":"To Image","hours":"12 / 20 hrs","notes":"Centaurus A — iconic southern galaxy with extreme dynamic range. Fresh start with ATR2600c (16-bit) will provide ~4x tonal gradation. Previous 585MC Pro broadband data archived. L-Pro broadband + dedicated Ha for jet interaction region."},{"slot":80,"catalogue":"NGC 6744","name":"Pavo Galaxy","type":"Galaxy","ra":"19h10m","dec":"-63.9°","size":"20×13","constellation":"Pavo","transit_alt":"64°","circumpolar":"Yes","rig":"103APO + ATR2600c","filter":"L-Pro broadband","best":"Jun–Oct","status":"Complete","hours":"Done","notes":"Benchmark galaxy image — on the wall. ATR2600c revisit optional for extra depth in outer arms."},{"slot":81,"catalogue":"NGC 253","name":"Sculptor Galaxy","type":"Galaxy","ra":"00h48m","dec":"-25.3°","size":"27×7","constellation":"Sculptor","transit_alt":"73°","circumpolar":"No","rig":"103APO + ATR2600c","filter":"L-Pro broadband","best":"Aug–Dec","status":"Complete","hours":"Done","notes":"Excellent dust lane resolution. More integration would pull outer halo further but keep as complete."},{"slot":82,"catalogue":"NGC 300","name":"NGC 300","type":"Galaxy","ra":"00h55m","dec":"-37.7°","size":"22×15","constellation":"Sculptor","transit_alt":"80°","circumpolar":"No","rig":"103APO + ATR2600c","filter":"L-Pro + Ha","best":"Aug–Dec","status":"To Image","hours":"12 / 20 hrs","notes":"NGC 300 — beautiful face-on spiral in Sculptor, Ha-rich with abundant HII regions throughout arms. ATR2600c (16-bit) planned for significantly improved outcome over previous 585MC Pro data."},{"slot":83,"catalogue":"NGC 55","name":"NGC 55","type":"Galaxy","ra":"0h14m54s","dec":"-39°11'48\"","size":"32×6","constellation":"Sculptor","transit_alt":"89°","circumpolar":"No","rig":"103APO + ATR2600c","filter":"L-Pro + Ha","best":"Aug–Dec","status":"To Image","hours":"10 / 18 hrs","notes":"NGC 55 — Magellanic-type irregular/barred spiral, one of the closest galaxies to the Milky Way. Seen nearly edge-on with abundant HII regions scattered along the irregular disc — Ha addition will be transformative. Genuinely underimaged target."},{"slot":84,"catalogue":"NGC 4945","name":"NGC 4945","type":"Galaxy","ra":"13h06m42s","dec":"-49°29'51\"","size":"20×4","constellation":"Centaurus","transit_alt":"79°","circumpolar":"No","rig":"103APO + 585MC Pro","filter":"L-Pro broadband","best":"Mar–Jul","status":"To Image","hours":"8 / 15 hrs","notes":"NGC 4945 — edge-on starburst spiral with excellent dust lane and bright nucleus. Close neighbour to Centaurus A on the sky. Revised pointing shifts frame to include companion galaxies: NGC 4976, NGC 4945A, PGC 45317."},{"slot":85,"catalogue":"NGC 5236","name":"Southern Pinwheel M83","type":"Galaxy","ra":"13h37m","dec":"-29.9°","size":"13×12","constellation":"Hydra","transit_alt":"78°","circumpolar":"No","rig":"103APO + ATR2600c","filter":"L-Pro + Ha","best":"Mar–Jul","status":"To Image","hours":"8 / 15 hrs","notes":"Stunning face-on barred spiral. Ha data reveals pink HII regions across the arms. One of the finest galaxies in the sky."},{"slot":86,"catalogue":"NGC 1365","name":"Great Barred Spiral","type":"Galaxy","ra":"3h33m38s","dec":"-36°08'27\"","size":"12×6","constellation":"Fornax","transit_alt":"88°","circumpolar":"No","rig":"103APO + 585MC Pro","filter":"L-Pro + Ha","best":"Sep–Jan","status":"To Image","hours":"10 / 18 hrs","notes":"NGC 1365 Great Barred Spiral — one of the finest barred spirals in the sky with unmistakable bar structure and sweeping spiral arms. NGC 1365 is a Seyfert 1.5 galaxy with active star formation along arms; Ha addition will reveal HII regions."},{"slot":87,"catalogue":"NGC 1399","name":"Fornax Cluster core","type":"Galaxy","ra":"3h38m29s","dec":"-35°27'15\"","size":"12×12","constellation":"Fornax","transit_alt":"87°","circumpolar":"No","rig":"103APO + ATR2600c","filter":"L-Pro broadband","best":"Sep–Jan","status":"To Image","hours":"12 / 20 hrs","notes":"Fornax Cluster core — one of the nearest and richest galaxy clusters, centred on NGC 1399. Frame captures extraordinary concentration of cluster members. Tidal streams potentially detectable with deep integration — scientifically compelling."},{"slot":88,"catalogue":"NGC 1316","name":"Fornax A","type":"Galaxy","ra":"3h23m05s","dec":"-37°17'07\"","size":"12×9","constellation":"Fornax","transit_alt":"89°","circumpolar":"No","rig":"103APO + ATR2600c","filter":"L-Pro broadband","best":"Sep–Jan","status":"To Image","hours":"10 / 18 hrs","notes":"NGC 1316 Fornax A — post-merger elliptical with extraordinary tidal shells, dust lanes and disturbed outer envelope. Fourth brightest radio source in the sky at 1400 MHz. 16-bit depth essential for low surface brightness tidal shell detection."},{"slot":89,"catalogue":"NGC 7552","name":"Grus Quartet","type":"Galaxy","ra":"23h16m","dec":"-42.6°","size":"30×20","constellation":"Grus","transit_alt":"75°","circumpolar":"No","rig":"103APO + ATR2600c","filter":"L-Pro broadband","best":"Jul–Nov","status":"Complete","hours":"Done","notes":"Four distinct galaxy morphologies — NGC 7552, 7582, 7590, 7599 — spanning a ~30×20' field. Barred spiral lower-left beautifully resolved. Background galaxy depth impressive."},{"slot":90,"catalogue":"NGC 1313","name":"Topsy-Turvy Galaxy","type":"Galaxy","ra":"3h18m15s","dec":"-66°30'00\"","size":"15×10","constellation":"Reticulum","transit_alt":"62°","circumpolar":"Yes","rig":"103APO + 585MC Pro","filter":"L-Pro broadband","best":"Nov–Feb","status":"To Image","hours":"12 / 20 hrs","notes":"NGC 1313 (Topsy-Turvy Galaxy) — chaotic starburst barred spiral. One of the most scientifically puzzling nearby galaxies: lopsided asymmetric arms, rotational axis offset from nuclear bar, rampant blue star-forming knots scattered without normal spiral order."},{"slot":91,"catalogue":"NGC 1566","name":"Spanish Dancer Galaxy","type":"Galaxy","ra":"4h19m59s","dec":"-54°56'35\"","size":"8×5","constellation":"Dorado","transit_alt":"73°","circumpolar":"Yes","rig":"103APO + 585MC Pro","filter":"L-Pro broadband","best":"Nov–Feb","status":"To Image","hours":"12 / 20 hrs","notes":"NGC 1566 (Spanish Dancer Galaxy) — grand design intermediate Seyfert spiral in Dorado, ~54 Mly distant. Strong, symmetrical face-on spiral arms traced by hot blue star clusters and dark dust lanes."},{"slot":92,"catalogue":"NGC 7424 / PGC 70096 / ESO 346-19","name":"Grand Design Galaxy","type":"Galaxy","ra":"22h57m16.70s","dec":"-41°04'21.8\"","size":"3×2","constellation":"Grus","transit_alt":"87°","circumpolar":"No","rig":"103APO + ASI585MC Pro","filter":"L-Pro broadband","best":"Oct–Nov","status":"To Image","hours":"8 / 15 hrs","notes":"NGC 7424 (PGC 70096 / ESO 346-19) — face-on grand design spiral galaxy in Grus. Type SAB(rs)cd; magnitude 10.38. Clearly structured grand design spiral with well-defined arms visible even on DSS background. Sits in an underimaged region of Grus despite its visual quality. Zero dedicated AstroBin images."},{"slot":93,"catalogue":"NGC 247","name":"NGC 247 — Sculptor Group Spiral","type":"Galaxy","ra":"0h47m23.10s","dec":"-20°49'37.5\"","size":"20×7","constellation":"Cetus","transit_alt":"73°","circumpolar":"No","rig":"103APO + ATR2600c native","filter":"L-Pro broadband","best":"Aug–Dec","status":"To Image","hours":"12 / 20 hrs","notes":"Diamond framing — galaxy long axis running diagonally within the rotated frame, creating an elegant needle-through-diamond composition. ATR2600c preferred over 585MC Pro for this target — larger pixels give better surface brightness sensitivity per pixel for the faint outer arms."},{"slot":94,"catalogue":"Dorado Group","name":"Dorado Galaxy Group — NGC 1549, 1553, 1546 + Doradus Cluster","type":"Galaxy","ra":"4h16m55.86s","dec":"-55°40'06.7\"","size":"90×60","constellation":"Dorado","transit_alt":"72°","circumpolar":"Yes","rig":"103APO + ATR2600c native","filter":"L-Pro broadband","best":"Sep–Feb","status":"To Image","hours":"15 / 20 hrs","notes":"Doradus Cluster (ringed/barred spiral) upper-left third; NGC 1549 + NGC 1553 elliptical pair centre-right; NGC 1546 lower-centre-right. Natural diagonal flow upper-left to lower-right across four distinct galaxy morphologies."},{"slot":95,"catalogue":"30 Dor","name":"Tarantula Nebula (LMC)","type":"LMC","ra":"05h39m","dec":"-69.1°","size":"40×25","constellation":"Dorado","transit_alt":"59°","circumpolar":"Yes","rig":"103APO + ATR2600c","filter":"D1 + D2 SHO","best":"Oct–Mar","status":"Improve","hours":"20 / 35 hrs","notes":"Both SHO and HOO versions are centrepieces of the portfolio. SHO version especially strong."},{"slot":96,"catalogue":"N 44","name":"N44 Superbubble (LMC)","type":"LMC","ra":"05h22m12s","dec":"-68°00'52\"","size":"30×25","constellation":"Dorado","transit_alt":"60°","circumpolar":"Yes","rig":"103APO + 585MC Pro","filter":"D1 Ha+OIII","best":"Oct–Mar","status":"To Image","hours":"10 / 18 hrs","notes":"N44 Superbubble — large HII superbubble in the LMC blown out by stellar winds and supernova shockwaves from a central OB association. Field content: NGC 1929 (central OB cluster), NGC 1934, NGC 1936, IC 2128 — all visible as distinct emission knots within the superbubble structure."},{"slot":97,"catalogue":"NGC 1763","name":"NGC 1763 — N11 Complex (LMC)","type":"LMC","ra":"04h57m","dec":"-66.4°","size":"15×12","constellation":"Dorado","transit_alt":"62°","circumpolar":"Yes","rig":"103APO + ATR2600c","filter":"D1 Ha+OIII","best":"Oct–Mar","status":"To Image","hours":"8 / 15 hrs","notes":"The N11 nebular complex in the LMC — the second largest HII region in the Magellanic Clouds after 30 Doradus. Multiple bright knots and dark lanes. Another galaxy's star formation in your frame."},{"slot":98,"catalogue":"NGC 1910","name":"NGC 1910 Region — LMC Bar","type":"LMC","ra":"05h18m","dec":"-69.2°","size":"20×15","constellation":"Dorado","transit_alt":"59°","circumpolar":"Yes","rig":"103APO + ATR2600c","filter":"D1 + L-Pro","best":"Oct–Mar","status":"To Image","hours":"10 / 18 hrs","notes":"Rich star-forming region along the LMC bar, surrounding the OB association LH 41. Complex mix of emission and reflection nebulosity. Rarely targeted individually by amateurs."},{"slot":99,"catalogue":"NGC 292","name":"Small Magellanic Cloud","type":"SMC","ra":"00h50m01s","dec":"-72°45'43\"","size":"320×185","constellation":"Tucana","transit_alt":"55°","circumpolar":"Yes","rig":"FRA300 + ATR2600c","filter":"L-Pro broadband","best":"All year","status":"To Image","hours":"8 / 15 hrs","notes":"Small Magellanic Cloud — fits beautifully in a single FRA300 panel. 47 Tucanae sits dramatically in the upper-right corner of the frame as a glorious compositional companion — the most natural pairing in the southern sky."},{"slot":100,"catalogue":"NGC 346","name":"NGC 346 SMC Star-Forming Region","type":"SMC","ra":"01h03m20s","dec":"-72°06'43\"","size":"55×30","constellation":"Tucana","transit_alt":"56°","circumpolar":"Yes","rig":"103APO + 585MC Pro","filter":"D1 Ha+OIII","best":"All year","status":"To Image","hours":"10 / 18 hrs","notes":"NGC 346 SMC Star-Forming Region — rich SMC emission complex with natural brightness gradient composition. NGC 346 / NGC 3466 dominant bright cluster and emission complex. Multiple SNRs in field."}];
+
+// ------------------------------------------------------------------
+// State
+// ------------------------------------------------------------------
+let filtered = [...DATA];
+let sortCol = 'slot';
+let sortAsc = true;
+let expandedSlot = null;
+const currentTab = { id: 'catalogue' };
+
+// ------------------------------------------------------------------
+// Init
+// ------------------------------------------------------------------
+function init() {
+  // Mark current month in planner
+  document.querySelectorAll('.month-col-header').forEach(th => {
+    if (parseInt(th.dataset.m) === CURRENT_MONTH) th.classList.add('current-month');
+  });
+  updateStats();
+  render();
+  renderPlanner();
+}
+
+function updateStats() {
+  document.getElementById('stat-complete').textContent = DATA.filter(t => t.status === 'Complete').length;
+  document.getElementById('stat-improve').textContent  = DATA.filter(t => t.status === 'Improve').length;
+  document.getElementById('stat-image').textContent    = DATA.filter(t => t.status === 'To Image' || t.status === 'Partial').length;
+}
+
+// ------------------------------------------------------------------
+// Tab switching
+// ------------------------------------------------------------------
+function switchTab(id) {
+  currentTab.id = id;
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.onclick.toString().includes(id)));
+  document.querySelectorAll('.panel').forEach(p => p.classList.toggle('active', p.id === 'panel-' + id));
+  if (id === 'planner') renderPlanner();
+}
+
+// ------------------------------------------------------------------
+// Filters
+// ------------------------------------------------------------------
+function applyFilters() {
+  const q      = document.getElementById('search').value.toLowerCase();
+  const type   = document.getElementById('filter-type').value;
+  const status = document.getElementById('filter-status').value;
+  const month  = parseInt(document.getElementById('filter-season').value) || 0;
+
+  filtered = DATA.filter(t => {
+    if (q && !(t.name.toLowerCase().includes(q) || t.catalogue.toLowerCase().includes(q))) return false;
+    if (type && t.type !== type) return false;
+    if (status && t.status !== status) return false;
+    if (month) {
+      const months = parseBest(t.best);
+      if (!months.includes(month)) return false;
+    }
+    return true;
+  });
+
+  document.getElementById('filter-results').textContent =
+    filtered.length === DATA.length ? '100 targets' : `${filtered.length} / 100 targets`;
+
+  render();
+  if (currentTab.id === 'planner') renderPlanner();
+}
+
+// ------------------------------------------------------------------
+// Sort
+// ------------------------------------------------------------------
+function sortBy(col) {
+  if (sortCol === col) sortAsc = !sortAsc;
+  else { sortCol = col; sortAsc = true; }
+
+  document.querySelectorAll('thead th').forEach(th => th.classList.remove('sorted'));
+
+  const th = document.getElementById('sort-' + col)?.closest('th');
+  if (th) th.classList.add('sorted');
+
+  document.querySelectorAll('.sort-indicator').forEach(s => s.textContent = '↕');
+  const indicator = document.getElementById('sort-' + col);
+  if (indicator) indicator.textContent = sortAsc ? '↑' : '↓';
+
+  render();
+}
+
+function sorted(arr) {
+  return [...arr].sort((a, b) => {
+    let va = a[sortCol]; let vb = b[sortCol];
+    if (sortCol === 'slot') { va = +va; vb = +vb; }
+    else { va = String(va).toLowerCase(); vb = String(vb).toLowerCase(); }
+    if (va < vb) return sortAsc ? -1 : 1;
+    if (va > vb) return sortAsc ? 1 : -1;
+    return 0;
+  });
+}
+
+// ------------------------------------------------------------------
+// Type class helper
+// ------------------------------------------------------------------
+function typeClass(type) {
+  return TYPE_CLASS[type] || 't-emission';
+}
+function statusClass(status) {
+  return STATUS_CLASS[status] || 's-image';
+}
+
+// ------------------------------------------------------------------
+// Render catalogue
+// ------------------------------------------------------------------
+function render() {
+  const tbody = document.getElementById('cat-body');
+  const noRes = document.getElementById('no-results');
+  const rows = sorted(filtered);
+  tbody.innerHTML = '';
+
+  if (rows.length === 0) {
+    noRes.style.display = 'block';
+    return;
+  }
+  noRes.style.display = 'none';
+
+  rows.forEach(t => {
+    const isExpanded = expandedSlot === t.slot;
+    const shortType = t.type.replace('Cometary Globule', 'Com.Glob');
+
+    const tr = document.createElement('tr');
+    tr.className = isExpanded ? 'expanded' : '';
+    tr.onclick = () => toggleExpand(t.slot);
+    tr.innerHTML = `
+      <td class="slot-num"><span class="expand-arrow">▶</span>${String(t.slot).padStart(2,'0')}</td>
+      <td class="cat-id" title="${t.catalogue}">${t.catalogue}</td>
+      <td class="target-name">${t.name}</td>
+      <td><span class="type-pill ${typeClass(t.type)}">${shortType}</span></td>
+      <td class="field-text">${t.constellation}</td>
+      <td class="coord">${t.ra}<br>${t.dec}</td>
+      <td class="field-text">${t.best}</td>
+      <td class="field-text" style="font-size:10px;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${t.rig}">${t.rig}</td>
+      <td class="coord">${t.hours}</td>
+      <td><span class="status-pill ${statusClass(t.status)}">${t.status}</span></td>
+    `;
+    tbody.appendChild(tr);
+
+    if (isExpanded) {
+      const xtr = document.createElement('tr');
+      xtr.className = 'expanded-row';
+      const xtd = document.createElement('td');
+      xtd.colSpan = 10;
+      xtd.innerHTML = `
+        <div class="expand-panel">
+          <div class="expand-grid">
+            <div class="expand-field"><label>Catalogue</label><span>${t.catalogue}</span></div>
+            <div class="expand-field"><label>Constellation</label><span>${t.constellation}</span></div>
+            <div class="expand-field"><label>RA</label><span>${t.ra}</span></div>
+            <div class="expand-field"><label>Dec</label><span>${t.dec}</span></div>
+            <div class="expand-field"><label>Size</label><span>${t.size}'</span></div>
+            <div class="expand-field"><label>Transit Alt</label><span>${t.transit_alt}</span></div>
+            <div class="expand-field"><label>Circumpolar</label><span>${t.circumpolar}</span></div>
+            <div class="expand-field"><label>Best Months</label><span>${t.best}</span></div>
+            <div class="expand-field"><label>Rig</label><span style="font-size:11px">${t.rig}</span></div>
+            <div class="expand-field"><label>Filter</label><span>${t.filter}</span></div>
+            <div class="expand-field"><label>Hours</label><span>${t.hours}</span></div>
+            <div class="expand-field"><label>Status</label><span class="status-pill ${statusClass(t.status)}">${t.status}</span></div>
+          </div>
+          ${t.notes ? `<div class="expand-notes"><label>Planning Notes</label><p>${t.notes.replace(/\n/g,'<br>')}</p></div>` : ''}
+        </div>
+      `;
+      xtr.appendChild(xtd);
+      tbody.appendChild(xtr);
+    }
+  });
+}
+
+function toggleExpand(slot) {
+  expandedSlot = expandedSlot === slot ? null : slot;
+  render();
+}
+
+// ------------------------------------------------------------------
+// Render planner
+// ------------------------------------------------------------------
+function renderPlanner() {
+  const tbody = document.getElementById('planner-body');
+  const rows = sorted(filtered);
+  tbody.innerHTML = '';
+
+  rows.forEach(t => {
+    const months = parseBest(t.best);
+    const dotClass = t.status === 'Complete' ? 'dot-complete'
+                   : t.status === 'Improve'  ? 'dot-improve'
+                   : 'dot-image';
+
+    const tr = document.createElement('tr');
+    let cells = `
+      <td class="planner-slot">${String(t.slot).padStart(2,'0')}</td>
+      <td><span class="planner-name">${t.name}<span class="planner-cat">${t.catalogue}</span></span></td>
+    `;
+    for (let m = 1; m <= 12; m++) {
+      const isVisible = months.includes(m);
+      const isCurrent = m === CURRENT_MONTH;
+      const bg = isCurrent ? 'style="background:rgba(111,168,220,0.05)"' : '';
+      cells += `<td class="dot-cell" ${bg}>`;
+      if (isVisible) cells += `<div class="dot ${dotClass}"></div>`;
+      else cells += `<div class="dot dot-empty"></div>`;
+      cells += '</td>';
+    }
+    tr.innerHTML = cells;
+    tbody.appendChild(tr);
+  });
+}
+
+// ------------------------------------------------------------------
+// Run
+// ------------------------------------------------------------------
+init();
+</script>
+</body>
+</html>
