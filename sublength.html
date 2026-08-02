@@ -479,8 +479,8 @@ details.advanced .field { margin-top: 0.8rem; }
 
     <h2>Sky-noise-limited exposure length</h2>
     <p>For a chosen tolerance — how much extra stacked noise you'll accept above the theoretical (zero read-noise) minimum — the optimal sub length has a closed form. If <code>k</code> is the accepted noise multiplier (e.g. <code>k = 1.05</code> for 5% extra noise) and <code>C = 1 / (k² − 1)</code>:</p>
-    <span class="formula">t_opt = C · R² / (P − C · D)</span>
-    <p>where <code>R</code> is read noise (e⁻), <code>P</code> is the sky-background electron rate (e⁻/px/s), and <code>D</code> is dark current (e⁻/px/s). A 5% penalty gives C≈10, a 2% penalty gives C≈25 — the curve flattens fast, which is why the app defaults to a 5% target rather than chasing zero.</p>
+    <span class="formula">t_opt = C · R² / (P + D)</span>
+    <p>where <code>R</code> is read noise (e⁻), <code>P</code> is the sky-background electron rate (e⁻/px/s), and <code>D</code> is dark current (e⁻/px/s) — the two shot-noise sources are added together in the denominator, since both are just Poisson noise that grows with exposure time the same way. A 5% penalty gives C≈10, a 2% penalty gives C≈25 — the curve flattens fast, which is why the app defaults to a 5% target rather than chasing zero. (This matches the standard community formula for this method, e.g. as implemented in Deep Sky Detail's sub-length calculator.)</p>
 
     <h2>Estimating sky electron rate</h2>
     <p>Sky background is an extended source, so — unlike point-source targets — its per-pixel signal rate depends only on focal ratio and pixel size, not aperture directly (a faster system delivers more sky photons per pixel regardless of how big the objective is):</p>
@@ -616,7 +616,11 @@ function noisePenaltyToC(pctExtra) {
 }
 
 function optTime(R, D, P, C) {
-  const denom = P - C*D;
+  // Total per-sub noise variance is R^2 + (P+D)*t (read noise + sky shot noise + dark
+  // shot noise). Requiring that total stay within k^2 of the read-noise-free ideal
+  // (P+D)*t gives R^2 <= (k^2-1)*(P+D)*t, i.e. t >= C*R^2/(P+D). Dark current adds to
+  // the shot-noise budget alongside sky rate -- it does not subtract from it.
+  const denom = P + D;
   if (denom <= 0) return Infinity;
   return C * R * R / denom;
 }
