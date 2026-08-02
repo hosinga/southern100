@@ -347,6 +347,11 @@ details.advanced .field { margin-top: 0.8rem; }
               <label>Dark current override <span class="hint" style="display:inline;text-transform:none;">(e⁻/px/s, optional)</span></label>
               <input type="number" id="inp-dark-override" step="0.001" placeholder="uses camera default">
             </div>
+            <div class="field">
+              <label>Bright-star protection cap <span class="hint" style="display:inline;text-transform:none;">(seconds, 0 = off)</span></label>
+              <input type="number" id="inp-star-cap" value="480" step="10">
+              <div class="hint">Independent of the noise/saturation math below: this caps sub length to protect bright stars and bright cores from clipping. The calculator has no per-target photometry, so it can't know exactly when a specific star will saturate — this is a practical ceiling, not a computed one. Narrowband imagers commonly cap around 5–10 min for this reason; broadband/OSC subs are usually short enough already that it rarely binds.</div>
+            </div>
           </details>
         </div>
 
@@ -451,7 +456,10 @@ details.advanced .field { margin-top: 0.8rem; }
     <h2>Saturation ceiling</h2>
     <p>Independent of noise theory, a sub can simply run too long and clip. The app caps recommended length so sky background alone never exceeds a configurable fraction of full well (default 70%), leaving headroom for the target's own signal:</p>
     <span class="formula">t_sat = headroom · FullWell(e⁻) / P</span>
-    <p>The final recommendation is <code>min(t_opt, t_sat)</code>, labelled by whichever constraint is binding.</p>
+    <p>This protects against <em>sky background</em> saturation only. It does not protect against <em>target</em> saturation.</p>
+
+    <h2>Bright-star protection cap</h2>
+    <p>A star is a point source: it delivers far more photons per pixel per second than the diffuse sky ever does, so a sub can be nowhere near sky-saturated and still clip every bright star in the field — this is completely normal in narrowband imaging, where sky-noise-limited exposures often land in the 5–20 minute range while a bright star saturates in seconds. Modelling this properly would require knowing the actual star field's brightness for each target, which is outside what a gear-and-sky calculator can do. Instead, the app applies a simple, editable practical ceiling (default 480s / 8min) independent of the noise and sky-saturation math, and labels the result "star-protection-limited" whenever that ceiling is what's actually binding. The final recommendation is <code>min(t_opt, t_sat, t_star_cap)</code>.</p>
 
     <h2>Guiding match</h2>
     <p>Guide RMS is a near-continuous correction residual, not something that grows with sub length once your guide loop is faster than a few seconds — so it doesn't set a hard time ceiling the way noise and saturation do. What it <em>does</em> set is whether your stars stay round at your pixel scale. The rule of thumb used here: guide RMS at or below ~30% of pixel scale gives essentially round stars; above ~100% of pixel scale, expect visible elongation.</p>
@@ -478,10 +486,10 @@ function defaultGear() {
     ],
     cameras: [
       { id: 'asi585', name: 'ZWO ASI585MC Pro', pixel_um: 2.9, res_w: 3840, res_h: 2160, qe: 0.91,
-        bit_depth: 16, dark_current_e_s: 0.005, max_gain: 600,
+        bit_depth: 16, dark_current_e_s: 0.0015, max_gain: 600,
         gain_curve: [ {gain:0, rn:3.3, fw:40000}, {gain:100, rn:1.8, fw:40000}, {gain:200, rn:0.9, fw:13500}, {gain:400, rn:0.8, fw:6000} ] },
       { id: 'atr2600c', name: 'ToupTek ATR2600C', pixel_um: 3.76, res_w: 6224, res_h: 4168, qe: 0.80,
-        bit_depth: 16, dark_current_e_s: 0.004, max_gain: 500,
+        bit_depth: 16, dark_current_e_s: 0.002, max_gain: 500,
         gain_curve: [ {gain:0, rn:3.3, fw:50000}, {gain:100, rn:1.5, fw:14700}, {gain:300, rn:1.0, fw:3700} ] }
     ],
     mounts: [
@@ -678,14 +686,19 @@ function runCalc() {
 
   const tOpt = optTime(R, D, P, C);
   const tSat = satTime(FW, P, headroomPct);
-  const recommended = Math.min(tOpt, tSat);
-  const limitedBy = tSat < tOpt ? 'sat' : 'noise';
+  const starCapInput = +document.getElementById('inp-star-cap').value;
+  const tStarCap = starCapInput > 0 ? starCapInput : Infinity;
+  const recommended = Math.min(tOpt, tSat, tStarCap);
+  const limitedBy = recommended === tStarCap && tStarCap < tOpt && tStarCap < tSat ? 'star'
+    : (tSat < tOpt ? 'sat' : 'noise');
 
   document.getElementById('hero-value').textContent = fmtTime(recommended);
   document.getElementById('hero-sub').textContent =
     `sky background ${P.toFixed(1)} e⁻/px/s · read noise ${R.toFixed(2)} e⁻ · f/${fr.toFixed(1)} · ${pxScale.toFixed(2)}″/px`;
-  document.getElementById('hero-badge').innerHTML = limitedBy === 'sat'
-    ? `<span class="hero-badge badge-sat">Saturation-limited</span>`
+  document.getElementById('hero-badge').innerHTML = limitedBy === 'star'
+    ? `<span class="hero-badge badge-sat">Star-protection-limited</span>`
+    : limitedBy === 'sat'
+    ? `<span class="hero-badge badge-sat">Sky-saturation-limited</span>`
     : `<span class="hero-badge badge-noise">Noise-limited</span>`;
 
   const skyShotNoise = Math.sqrt(Math.max(0, P * recommended));
@@ -703,8 +716,9 @@ function runCalc() {
     ['Sky rate', P.toFixed(2) + ' e⁻/px/s'],
     ['Read noise', R.toFixed(2) + ' e⁻'],
     ['Full well', Math.round(FW).toLocaleString() + ' e⁻'],
-    ['Saturation cap', fmtTime(tSat)],
+    ['Sky-saturation cap', fmtTime(tSat)],
     ['Noise-optimal', fmtTime(tOpt)],
+    ['Star-protection cap', isFinite(tStarCap) ? fmtTime(tStarCap) : 'off'],
   ].map(([l,v]) => `<div class="stat-item"><span class="stat-label">${l}</span><span class="stat-val gold">${v}</span></div>`).join('');
 
   const rmsOverride = document.getElementById('inp-rms-override').value;
@@ -735,15 +749,19 @@ function runCalc() {
     intCard.style.display = 'none';
   }
 
-  document.getElementById('calc-note').innerHTML = calcMode === 'theory'
+  const sourceNote = calcMode === 'theory'
     ? `<strong>Theoretical estimate.</strong> Sky background derived from Bortle ${bortle} (SQM ${sqm.toFixed(2)}) via a calibrated approximation — see Methodology. For best accuracy, switch to Measured mode with a real test sub once you're at the eyepiece.`
     : `<strong>Measured from test sub.</strong> Sky rate computed directly from your ${(+document.getElementById('inp-test-exp').value||0)}s test exposure at gain ${gain}. This is the most accurate mode available.`;
+  const starNote = limitedBy === 'star'
+    ? `<br><br><strong>Star-protection cap is binding.</strong> The noise-optimal length here would be ${fmtTime(tOpt)}, but that's long enough to risk clipping bright stars and bright cores — this calculator has no per-target photometry, so the cap is a practical ceiling, not a computed one. Tighten or loosen it in Advanced settings, or shoot short "star-safe" subs separately if you want both the longer nebulosity data and unclipped stars.`
+    : '';
+  document.getElementById('calc-note').innerHTML = sourceNote + starNote;
 }
 
 function wireCalcInputs() {
   const ids = ['sel-scope','sel-reducer','sel-camera','sel-mount','sel-filter','rng-gain','rng-bortle',
     'inp-rms-override','inp-sqm-override','inp-test-exp','inp-test-adu','inp-test-bias','rng-penalty',
-    'rng-headroom','inp-dark-override','inp-total-hours'];
+    'rng-headroom','inp-dark-override','inp-star-cap','inp-total-hours'];
   ids.forEach(id => {
     const el = document.getElementById(id);
     el.addEventListener('input', () => {
