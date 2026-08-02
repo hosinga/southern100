@@ -356,6 +356,20 @@ details.advanced .field { margin-top: 0.8rem; }
         </div>
 
         <div class="card">
+          <div class="card-title">Target Star Check <span class="hint">optional — from Stellarium</span></div>
+          <div class="field">
+            <label>Brightest star in field (magnitude)</label>
+            <input type="number" id="inp-star-mag" step="0.1" placeholder="leave blank to use flat cap below">
+            <div class="hint">Frame the target in Stellarium at your rig's actual FOV/rotation, read off the magnitude of the brightest star in frame, and enter it here. Overrides the flat star-protection cap with a real point-source saturation time for this specific field.</div>
+          </div>
+          <div class="field">
+            <label>Star FWHM / seeing <span class="hint" style="display:inline;text-transform:none;">(arcsec)</span></label>
+            <input type="number" id="inp-star-fwhm" value="2.5" step="0.1">
+            <div class="hint">How tightly the star's light is spread across pixels — tighter seeing/better focus concentrates more electrons in fewer pixels, saturating sooner. 2–3″ is typical suburban seeing.</div>
+          </div>
+        </div>
+
+        <div class="card">
           <div class="card-title">Target Integration <span class="hint">optional</span></div>
           <div class="field">
             <label>Total integration target (hours)</label>
@@ -458,8 +472,14 @@ details.advanced .field { margin-top: 0.8rem; }
     <span class="formula">t_sat = headroom · FullWell(e⁻) / P</span>
     <p>This protects against <em>sky background</em> saturation only. It does not protect against <em>target</em> saturation.</p>
 
-    <h2>Bright-star protection cap</h2>
-    <p>A star is a point source: it delivers far more photons per pixel per second than the diffuse sky ever does, so a sub can be nowhere near sky-saturated and still clip every bright star in the field — this is completely normal in narrowband imaging, where sky-noise-limited exposures often land in the 5–20 minute range while a bright star saturates in seconds. Modelling this properly would require knowing the actual star field's brightness for each target, which is outside what a gear-and-sky calculator can do. Instead, the app applies a simple, editable practical ceiling (default 480s / 8min) independent of the noise and sky-saturation math, and labels the result "star-protection-limited" whenever that ceiling is what's actually binding. The final recommendation is <code>min(t_opt, t_sat, t_star_cap)</code>.</p>
+    <h2>Bright-star saturation cap</h2>
+    <p>A star is a point source: it delivers far more photons per pixel per second than the diffuse sky ever does, so a sub can be nowhere near sky-saturated and still clip every bright star in the field — this is completely normal in narrowband imaging, where sky-noise-limited exposures often land in the 5–20 minute range while a bright star saturates in seconds. The app offers two ways to bound this:</p>
+    <p><strong>Flat cap (default, no data needed):</strong> a simple, editable practical ceiling (default 480s / 8min), independent of the noise and sky-saturation math. It's a guess, not a computed value — useful when you haven't looked anything up.</p>
+    <p><strong>Photometric cap (accurate, needs one number from Stellarium):</strong> frame the actual target at your rig's real FOV and rotation in Stellarium, read off the magnitude of the brightest star in shot, and enter it in the Target Star Check card. The app then computes a real peak-pixel electron rate for that star and derives the time until it saturates:</p>
+    <span class="formula">e_rate(peak) = N₀ · 10^(−0.4·mag) · A_aperture(cm²) · τ_filter · QE / (2π·σ_px²)</span>
+    <span class="formula">t_star_sat = FullWell(e⁻) / e_rate(peak)</span>
+    <p>where <code>N₀</code> is the photon flux from a magnitude-0 star integrated across the same ~300nm reference broadband used for <code>τ_filter</code> above (so the same filter that cuts sky-glow continuum cuts stellar continuum the same way — a real, if approximate, physical link), <code>A_aperture</code> is the telescope's clear aperture area, and <code>σ_px</code> is the star's Gaussian PSF width in pixels, derived from your entered seeing/FWHM and the rig's pixel scale (tighter stars concentrate more electrons per pixel and saturate sooner). This is a genuine per-field, per-rig calculation — not a placeholder — though it still assumes a roughly flat stellar continuum and a Gaussian PSF, both reasonable approximations rather than exact photometry.</p>
+    <p>Whichever cap is active, the final recommendation is <code>min(t_opt, t_sat, t_star_cap)</code>, and the badge tells you which one is actually binding.</p>
 
     <h2>Guiding match</h2>
     <p>Guide RMS is a near-continuous correction residual, not something that grows with sub length once your guide loop is faster than a few seconds — so it doesn't set a hard time ceiling the way noise and saturation do. What it <em>does</em> set is whether your stars stay round at your pixel scale. The rule of thumb used here: guide RMS at or below ~30% of pixel scale gives essentially round stars; above ~100% of pixel scale, expect visible elongation.</p>
@@ -582,6 +602,20 @@ function satTime(fullWell, P, headroomPct) {
   return (headroomPct/100) * fullWell / P;
 }
 
+// N0: photon flux (photons/s/cm^2) from a mag-0 star integrated across the same
+// ~300nm reference broadband used for filterTau(), so a real filter's fractional
+// bandwidth reduces star continuum the same way it reduces sky-glow continuum.
+const STAR_N0_PHOTONS_CM2_S = 3.0e6;
+
+function starPeakElectronRate({ mag, apertureMm, qe, tau, fwhmArcsec, pixelScaleArcsec }) {
+  const apertureCm = apertureMm / 10;
+  const areaCm2 = Math.PI * (apertureCm/2) ** 2;
+  const photonRate = STAR_N0_PHOTONS_CM2_S * Math.pow(10, -0.4*mag) * areaCm2 * tau;
+  const eRateTotal = photonRate * qe;
+  const sigmaPx = fwhmArcsec / pixelScaleArcsec / 2.3548;
+  return eRateTotal / (2 * Math.PI * sigmaPx * sigmaPx);
+}
+
 function guidingBadge(rms, pxScale) {
   const ratio = rms / pxScale;
   if (ratio <= 0.3) return { label: 'Excellent match — round stars', cls: 'badge-good' };
@@ -686,17 +720,32 @@ function runCalc() {
 
   const tOpt = optTime(R, D, P, C);
   const tSat = satTime(FW, P, headroomPct);
+
+  const starMagInput = document.getElementById('inp-star-mag').value;
   const starCapInput = +document.getElementById('inp-star-cap').value;
-  const tStarCap = starCapInput > 0 ? starCapInput : Infinity;
+  let tStarCap, starPeakRate = null, starMode;
+  if (starMagInput !== '') {
+    const mag = +starMagInput;
+    const fwhmArcsec = +document.getElementById('inp-star-fwhm').value || 2.5;
+    starPeakRate = starPeakElectronRate({ mag, apertureMm: scope.aperture_mm, qe: camera.qe, tau, fwhmArcsec, pixelScaleArcsec: pxScale });
+    tStarCap = starPeakRate > 0 ? FW / starPeakRate : Infinity;
+    starMode = 'photometric';
+  } else {
+    tStarCap = starCapInput > 0 ? starCapInput : Infinity;
+    starMode = 'flat';
+  }
+
   const recommended = Math.min(tOpt, tSat, tStarCap);
-  const limitedBy = recommended === tStarCap && tStarCap < tOpt && tStarCap < tSat ? 'star'
+  const limitedBy = recommended === tStarCap && tStarCap < tOpt && tStarCap < tSat ? (starMode === 'photometric' ? 'starphoto' : 'star')
     : (tSat < tOpt ? 'sat' : 'noise');
 
   document.getElementById('hero-value').textContent = fmtTime(recommended);
   document.getElementById('hero-sub').textContent =
     `sky background ${P.toFixed(1)} e⁻/px/s · read noise ${R.toFixed(2)} e⁻ · f/${fr.toFixed(1)} · ${pxScale.toFixed(2)}″/px`;
-  document.getElementById('hero-badge').innerHTML = limitedBy === 'star'
-    ? `<span class="hero-badge badge-sat">Star-protection-limited</span>`
+  document.getElementById('hero-badge').innerHTML = limitedBy === 'starphoto'
+    ? `<span class="hero-badge badge-sat">Star-saturation-limited (measured field)</span>`
+    : limitedBy === 'star'
+    ? `<span class="hero-badge badge-sat">Star-protection-limited (flat cap)</span>`
     : limitedBy === 'sat'
     ? `<span class="hero-badge badge-sat">Sky-saturation-limited</span>`
     : `<span class="hero-badge badge-noise">Noise-limited</span>`;
@@ -709,7 +758,7 @@ function runCalc() {
     `<div class="noise-seg sky" style="width:${skyPct}%">${skyPct>15?skyShotNoise.toFixed(2)+'e⁻':''}</div>` +
     `<div class="noise-seg read" style="width:${readPct}%">${readPct>15?R.toFixed(2)+'e⁻':''}</div>`;
 
-  document.getElementById('stat-grid').innerHTML = [
+  const statRows = [
     ['Effective focal length', fl.toFixed(0) + ' mm'],
     ['Focal ratio', 'f/' + fr.toFixed(2)],
     ['Pixel scale', pxScale.toFixed(2) + ' ″/px'],
@@ -718,8 +767,15 @@ function runCalc() {
     ['Full well', Math.round(FW).toLocaleString() + ' e⁻'],
     ['Sky-saturation cap', fmtTime(tSat)],
     ['Noise-optimal', fmtTime(tOpt)],
-    ['Star-protection cap', isFinite(tStarCap) ? fmtTime(tStarCap) : 'off'],
-  ].map(([l,v]) => `<div class="stat-item"><span class="stat-label">${l}</span><span class="stat-val gold">${v}</span></div>`).join('');
+  ];
+  if (starMode === 'photometric') {
+    statRows.push(['Star peak-pixel rate', starPeakRate.toFixed(0) + ' e⁻/px/s']);
+    statRows.push(['Star saturation cap', isFinite(tStarCap) ? fmtTime(tStarCap) : 'off']);
+  } else {
+    statRows.push(['Star-protection cap', isFinite(tStarCap) ? fmtTime(tStarCap) : 'off']);
+  }
+  document.getElementById('stat-grid').innerHTML = statRows
+    .map(([l,v]) => `<div class="stat-item"><span class="stat-label">${l}</span><span class="stat-val gold">${v}</span></div>`).join('');
 
   const rmsOverride = document.getElementById('inp-rms-override').value;
   const rms = rmsOverride !== '' ? +rmsOverride : mount.guide_rms_arcsec;
@@ -752,8 +808,10 @@ function runCalc() {
   const sourceNote = calcMode === 'theory'
     ? `<strong>Theoretical estimate.</strong> Sky background derived from Bortle ${bortle} (SQM ${sqm.toFixed(2)}) via a calibrated approximation — see Methodology. For best accuracy, switch to Measured mode with a real test sub once you're at the eyepiece.`
     : `<strong>Measured from test sub.</strong> Sky rate computed directly from your ${(+document.getElementById('inp-test-exp').value||0)}s test exposure at gain ${gain}. This is the most accurate mode available.`;
-  const starNote = limitedBy === 'star'
-    ? `<br><br><strong>Star-protection cap is binding.</strong> The noise-optimal length here would be ${fmtTime(tOpt)}, but that's long enough to risk clipping bright stars and bright cores — this calculator has no per-target photometry, so the cap is a practical ceiling, not a computed one. Tighten or loosen it in Advanced settings, or shoot short "star-safe" subs separately if you want both the longer nebulosity data and unclipped stars.`
+  const starNote = limitedBy === 'starphoto'
+    ? `<br><br><strong>Star-saturation cap is binding, computed from your field.</strong> A mag ${(+starMagInput).toFixed(1)} star at ${(+document.getElementById('inp-star-fwhm').value||2.5).toFixed(1)}″ FWHM saturates the peak pixel in ${fmtTime(tStarCap)} — well before the noise-optimal ${fmtTime(tOpt)}. This is a real number for this specific field, not a placeholder: it accounts for your aperture, QE, filter, and pixel scale. Re-check in Stellarium if you change target, rotation, or FOV.`
+    : limitedBy === 'star'
+    ? `<br><br><strong>Star-protection cap is binding (flat, unverified).</strong> The noise-optimal length here would be ${fmtTime(tOpt)}, but that's long enough to risk clipping bright stars and bright cores. No magnitude was entered above, so this is a generic placeholder ceiling, not computed for this field — enter the brightest star's magnitude from Stellarium in the Target Star Check card for a real number.`
     : '';
   document.getElementById('calc-note').innerHTML = sourceNote + starNote;
 }
@@ -761,7 +819,7 @@ function runCalc() {
 function wireCalcInputs() {
   const ids = ['sel-scope','sel-reducer','sel-camera','sel-mount','sel-filter','rng-gain','rng-bortle',
     'inp-rms-override','inp-sqm-override','inp-test-exp','inp-test-adu','inp-test-bias','rng-penalty',
-    'rng-headroom','inp-dark-override','inp-star-cap','inp-total-hours'];
+    'rng-headroom','inp-dark-override','inp-star-cap','inp-star-mag','inp-star-fwhm','inp-total-hours'];
   ids.forEach(id => {
     const el = document.getElementById(id);
     el.addEventListener('input', () => {
