@@ -1,0 +1,1004 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sub-Length Engine · The Southern 100</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:        #0a0c10;
+  --bg2:       #0f1218;
+  --bg3:       #151a22;
+  --bg4:       #1a2029;
+  --border:    #1e2530;
+  --border2:   #2a3545;
+  --text:      #c8d4e0;
+  --text2:     #6a7f96;
+  --text3:     #3d5066;
+  --accent:    #4a9eff;
+  --accent2:   #1a4a80;
+  --gold:      #c8a84b;
+  --gold2:     #8a6a20;
+  --green:     #3dba7a;
+  --green2:    #1a5a38;
+  --amber:     #e8a030;
+  --amber2:    #7a4a10;
+  --red:       #e05050;
+  --red2:      #7a2020;
+  --serif:     'Libre Baskerville', Georgia, serif;
+  --mono:      'JetBrains Mono', 'Courier New', monospace;
+  --radius:    6px;
+  --transition: 180ms ease;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 15px; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--serif);
+  min-height: 100vh;
+  line-height: 1.6;
+}
+
+header {
+  border-bottom: 1px solid var(--border);
+  background: var(--bg2);
+  padding: 0 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  height: 56px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.header-left { display: flex; flex-direction: column; gap: 2px; }
+.header-title {
+  font-family: var(--mono); font-size: 0.72rem; font-weight: 500;
+  letter-spacing: 0.18em; text-transform: uppercase; color: var(--gold); white-space: nowrap;
+}
+.header-sub { font-family: var(--mono); font-size: 0.62rem; color: var(--text3); letter-spacing: 0.1em; white-space: nowrap; }
+
+nav {
+  display: flex; gap: 0; border-bottom: 1px solid var(--border); background: var(--bg2);
+  padding: 0 1.5rem; position: sticky; top: 56px; z-index: 99; overflow-x: auto;
+}
+.tab {
+  font-family: var(--mono); font-size: 0.7rem; letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--text3); padding: 0.7rem 1.2rem; cursor: pointer; border-bottom: 2px solid transparent;
+  transition: color var(--transition), border-color var(--transition); user-select: none;
+  background: none; border-top: none; border-left: none; border-right: none; white-space: nowrap;
+}
+.tab:hover { color: var(--text); }
+.tab.active { color: var(--gold); border-bottom-color: var(--gold); }
+
+.view { display: none; }
+.view.active { display: block; }
+
+.wrap { max-width: 1280px; margin: 0 auto; padding: 1.5rem; }
+.grid-calc { display: grid; grid-template-columns: minmax(320px, 420px) 1fr; gap: 1.5rem; align-items: start; }
+
+.card {
+  background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 1.3rem 1.4rem; margin-bottom: 1.2rem;
+}
+.card-title {
+  font-family: var(--mono); font-size: 0.65rem; letter-spacing: 0.15em; text-transform: uppercase;
+  color: var(--gold); margin-bottom: 1rem; padding-bottom: 0.6rem; border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+}
+
+.field { margin-bottom: 1rem; }
+.field:last-child { margin-bottom: 0; }
+.field label {
+  display: block; font-family: var(--mono); font-size: 0.62rem; letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--text3); margin-bottom: 0.4rem;
+}
+.field .hint { font-family: var(--mono); font-size: 0.6rem; color: var(--text3); margin-top: 0.3rem; }
+
+select, input[type=text], input[type=number] {
+  width: 100%; background: var(--bg3); border: 1px solid var(--border2); border-radius: var(--radius);
+  color: var(--text); font-family: var(--mono); font-size: 0.78rem; padding: 0.5rem 0.7rem;
+  outline: none; transition: border-color var(--transition);
+}
+select:focus, input:focus { border-color: var(--accent2); }
+
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem; }
+
+input[type=range] {
+  width: 100%; accent-color: var(--gold); height: 4px; background: var(--bg3); cursor: pointer;
+}
+.slider-val { font-family: var(--mono); font-size: 0.72rem; color: var(--gold); float: right; }
+
+.toggle-row { display: flex; gap: 0.5rem; }
+.toggle-btn {
+  flex: 1; font-family: var(--mono); font-size: 0.65rem; letter-spacing: 0.08em; text-transform: uppercase;
+  padding: 0.5rem; border-radius: var(--radius); border: 1px solid var(--border2); background: var(--bg3);
+  color: var(--text3); cursor: pointer; transition: all var(--transition); text-align: center;
+}
+.toggle-btn.active { border-color: var(--gold); color: var(--gold); background: var(--gold2); }
+
+details.advanced { margin-top: 0.8rem; }
+details.advanced summary {
+  font-family: var(--mono); font-size: 0.62rem; letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--text3); cursor: pointer; padding: 0.3rem 0; user-select: none;
+}
+details.advanced summary:hover { color: var(--text2); }
+details.advanced .field { margin-top: 0.8rem; }
+
+/* ── RESULTS ── */
+.hero-card {
+  background: linear-gradient(160deg, var(--bg2), var(--bg3));
+  border: 1px solid var(--border2); border-radius: var(--radius);
+  padding: 2rem 1.6rem; margin-bottom: 1.2rem; text-align: center; position: relative; overflow: hidden;
+}
+.hero-label {
+  font-family: var(--mono); font-size: 0.65rem; letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--text3); margin-bottom: 0.6rem;
+}
+.hero-value {
+  font-family: var(--serif); font-weight: 700; font-size: 3.4rem; color: var(--gold); line-height: 1;
+  margin-bottom: 0.5rem;
+}
+.hero-sub { font-family: var(--mono); font-size: 0.7rem; color: var(--text2); letter-spacing: 0.05em; }
+.hero-badge {
+  display: inline-block; margin-top: 0.9rem; font-family: var(--mono); font-size: 0.62rem;
+  letter-spacing: 0.1em; text-transform: uppercase; padding: 3px 10px; border-radius: 3px;
+}
+.badge-noise { background: var(--accent2); color: var(--accent); }
+.badge-sat { background: var(--amber2); color: var(--amber); }
+
+.stat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 0.9rem 1.4rem; }
+.stat-item { display: flex; flex-direction: column; gap: 2px; }
+.stat-label { font-family: var(--mono); font-size: 0.58rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text3); }
+.stat-val { font-family: var(--mono); font-size: 0.9rem; color: var(--text); }
+.stat-val.gold { color: var(--gold); }
+
+.badge { display: inline-block; font-family: var(--mono); font-size: 0.6rem; letter-spacing: 0.06em; text-transform: uppercase; padding: 2px 8px; border-radius: 3px; }
+.badge-good { background: var(--green2); color: var(--green); }
+.badge-warn { background: var(--amber2); color: var(--amber); }
+.badge-bad  { background: var(--red2); color: var(--red); }
+
+.noise-bar-wrap { margin-top: 0.4rem; }
+.noise-bar { display: flex; height: 22px; border-radius: 4px; overflow: hidden; border: 1px solid var(--border2); }
+.noise-seg { display: flex; align-items: center; justify-content: center; font-family: var(--mono); font-size: 0.58rem; color: var(--bg); font-weight: 600; white-space: nowrap; overflow: hidden; }
+.noise-seg.sky { background: var(--accent); }
+.noise-seg.read { background: var(--gold); }
+.noise-legend { display: flex; gap: 1.2rem; margin-top: 0.5rem; font-family: var(--mono); font-size: 0.62rem; color: var(--text2); }
+.noise-legend span::before { content: ''; display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 5px; vertical-align: middle; }
+.leg-sky::before { background: var(--accent); }
+.leg-read::before { background: var(--gold); }
+
+.note-box {
+  font-family: var(--mono); font-size: 0.68rem; line-height: 1.7; color: var(--text2);
+  background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius); padding: 0.9rem 1rem;
+  margin-top: 1rem;
+}
+.note-box strong { color: var(--gold); }
+
+/* ── GEAR LIBRARY ── */
+.gear-section { margin-bottom: 2rem; }
+.gear-section-title {
+  font-family: var(--mono); font-size: 0.68rem; letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--gold); margin-bottom: 0.9rem; display: flex; justify-content: space-between; align-items: center;
+}
+.gear-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem; }
+.gear-card {
+  background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 1rem 1.1rem;
+}
+.gear-card-head { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.6rem; }
+.gear-card-name { font-size: 0.95rem; font-weight: 700; color: var(--text); }
+.gear-card-spec { font-family: var(--mono); font-size: 0.65rem; color: var(--text2); line-height: 1.6; }
+.gear-card-actions { display: flex; gap: 0.4rem; margin-top: 0.8rem; }
+
+.btn {
+  font-family: var(--mono); font-size: 0.62rem; letter-spacing: 0.08em; text-transform: uppercase;
+  padding: 0.4rem 0.85rem; border-radius: var(--radius); cursor: pointer; border: 1px solid var(--border2);
+  transition: all var(--transition); white-space: nowrap; background: var(--bg3); color: var(--text2);
+}
+.btn:hover { border-color: var(--text3); color: var(--text); }
+.btn-primary { background: var(--gold2); border-color: var(--gold); color: var(--gold); }
+.btn-primary:hover { background: var(--gold); color: var(--bg); }
+.btn-danger { border-color: var(--red2); color: var(--red); background: transparent; }
+.btn-danger:hover { background: var(--red2); }
+.btn-sm { padding: 0.3rem 0.6rem; font-size: 0.58rem; }
+
+.gear-edit { margin-top: 0.8rem; padding-top: 0.8rem; border-top: 1px solid var(--border); display: none; }
+.gear-edit.open { display: block; }
+.gear-edit .field { margin-bottom: 0.6rem; }
+
+.curve-table { width: 100%; font-family: var(--mono); font-size: 0.65rem; border-collapse: collapse; margin: 0.5rem 0; }
+.curve-table th { text-align: left; color: var(--text3); font-weight: 500; padding: 3px 4px; border-bottom: 1px solid var(--border2); }
+.curve-table td { padding: 2px 4px; }
+.curve-table input { padding: 0.25rem 0.4rem; font-size: 0.65rem; }
+
+.toolbar { display: flex; gap: 0.6rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
+
+/* ── METHODOLOGY ── */
+.method-wrap { max-width: 780px; margin: 0 auto; padding: 2rem 1.5rem 3rem; }
+.method-wrap h2 {
+  font-family: var(--mono); font-size: 0.7rem; letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--gold); margin: 2rem 0 0.8rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border);
+}
+.method-wrap h2:first-child { margin-top: 0; }
+.method-wrap p { font-size: 0.9rem; color: var(--text); line-height: 1.85; margin-bottom: 0.9rem; }
+.method-wrap code {
+  font-family: var(--mono); font-size: 0.82rem; background: var(--bg3); color: var(--gold);
+  padding: 0.15rem 0.4rem; border-radius: 3px;
+}
+.method-wrap .formula {
+  display: block; font-family: var(--mono); font-size: 0.85rem; background: var(--bg2); color: var(--gold);
+  border: 1px solid var(--border); border-radius: var(--radius); padding: 0.9rem 1.1rem; margin: 0.8rem 0; overflow-x: auto;
+}
+.method-wrap ul { margin: 0 0 0.9rem 1.4rem; color: var(--text); font-size: 0.88rem; line-height: 1.8; }
+
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text3); }
+
+@media (max-width: 860px) {
+  .grid-calc { grid-template-columns: 1fr; }
+  .hero-value { font-size: 2.6rem; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <span class="header-title">Sub-Length Engine</span>
+    <span class="header-sub">The Southern 100 · Ocean Grove · Bortle 4.5</span>
+  </div>
+  <div style="font-family:var(--mono);font-size:0.62rem;color:var(--text3);text-align:right;">exposure optimiser</div>
+</header>
+
+<nav>
+  <button class="tab active" data-view="calc">Calculator</button>
+  <button class="tab" data-view="gear">Gear Library</button>
+  <button class="tab" data-view="method">Methodology</button>
+</nav>
+
+<!-- CALCULATOR VIEW -->
+<div id="view-calc" class="view active">
+  <div class="wrap">
+    <div class="grid-calc">
+      <div>
+        <div class="card">
+          <div class="card-title">Rig</div>
+          <div class="field">
+            <label>Telescope</label>
+            <select id="sel-scope"></select>
+          </div>
+          <div class="field" id="reducer-field" style="display:none">
+            <label>Optical configuration</label>
+            <select id="sel-reducer"></select>
+          </div>
+          <div class="field">
+            <label>Camera</label>
+            <select id="sel-camera"></select>
+          </div>
+          <div class="field">
+            <label>Mount</label>
+            <select id="sel-mount"></select>
+          </div>
+          <div class="field">
+            <label>Filter</label>
+            <select id="sel-filter"></select>
+          </div>
+          <div class="field">
+            <label>Camera gain <span class="slider-val" id="val-gain">0</span></label>
+            <input type="range" id="rng-gain" min="0" max="600" value="0" step="1">
+            <div class="hint" id="gain-derived"></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Sky Conditions</div>
+          <div class="field">
+            <label>Bortle class <span class="slider-val" id="val-bortle">4.5</span></label>
+            <input type="range" id="rng-bortle" min="1" max="9" value="4.5" step="0.5">
+          </div>
+          <div class="field">
+            <label>Tonight's guide RMS override <span class="hint" style="display:inline;text-transform:none;">(optional, arcsec)</span></label>
+            <input type="number" id="inp-rms-override" step="0.01" placeholder="uses mount default">
+          </div>
+          <details class="advanced">
+            <summary>Advanced — sky brightness source ▾</summary>
+            <div class="field">
+              <label>Method</label>
+              <div class="toggle-row">
+                <button class="toggle-btn active" id="btn-mode-theory" data-mode="theory">Theoretical (Bortle)</button>
+                <button class="toggle-btn" id="btn-mode-measured" data-mode="measured">Measured (test sub)</button>
+              </div>
+            </div>
+            <div id="theory-fields">
+              <div class="field">
+                <label>SQM override <span class="hint" style="display:inline;text-transform:none;">(mag/arcsec², optional)</span></label>
+                <input type="number" id="inp-sqm-override" step="0.01" placeholder="derived from Bortle">
+              </div>
+            </div>
+            <div id="measured-fields" style="display:none">
+              <div class="row2">
+                <div class="field"><label>Test sub length (s)</label><input type="number" id="inp-test-exp" value="10" step="0.1"></div>
+                <div class="field"><label>Mean background ADU</label><input type="number" id="inp-test-adu" value="1200" step="1"></div>
+              </div>
+              <div class="field"><label>Bias / offset ADU</label><input type="number" id="inp-test-bias" value="256" step="1"></div>
+            </div>
+          </details>
+          <details class="advanced">
+            <summary>Advanced — noise & saturation targets ▾</summary>
+            <div class="field">
+              <label>Noise penalty target <span class="slider-val" id="val-penalty">5%</span></label>
+              <input type="range" id="rng-penalty" min="1" max="20" value="5" step="1">
+              <div class="hint">Accept this much extra stacked noise above the theoretical read-noise-free minimum. Lower = longer subs, diminishing returns below ~5%.</div>
+            </div>
+            <div class="field">
+              <label>Saturation headroom <span class="slider-val" id="val-headroom">70%</span></label>
+              <input type="range" id="rng-headroom" min="30" max="90" value="70" step="5">
+              <div class="hint">Stop sky-only signal at this fraction of full well, leaving room for the target itself.</div>
+            </div>
+            <div class="field">
+              <label>Dark current override <span class="hint" style="display:inline;text-transform:none;">(e⁻/px/s, optional)</span></label>
+              <input type="number" id="inp-dark-override" step="0.001" placeholder="uses camera default">
+            </div>
+          </details>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Target Integration <span class="hint">optional</span></div>
+          <div class="field">
+            <label>Total integration target (hours)</label>
+            <input type="number" id="inp-total-hours" step="0.5" placeholder="e.g. 6">
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="hero-card">
+          <div class="hero-label">Recommended sub-exposure length</div>
+          <div class="hero-value" id="hero-value">—</div>
+          <div class="hero-sub" id="hero-sub"></div>
+          <div id="hero-badge"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Noise Budget at Recommended Length</div>
+          <div class="noise-bar-wrap">
+            <div class="noise-bar" id="noise-bar"></div>
+            <div class="noise-legend">
+              <span class="leg-sky">Sky shot noise</span>
+              <span class="leg-read">Read noise</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">System Stats</div>
+          <div class="stat-grid" id="stat-grid"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Guiding Match</div>
+          <div id="guiding-block"></div>
+        </div>
+
+        <div class="card" id="integration-card" style="display:none">
+          <div class="card-title">Session Plan</div>
+          <div class="stat-grid" id="integration-grid"></div>
+        </div>
+
+        <div class="note-box" id="calc-note"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- GEAR LIBRARY VIEW -->
+<div id="view-gear" class="view">
+  <div class="wrap">
+    <div class="toolbar">
+      <button class="btn" id="btn-export">Export gear (JSON)</button>
+      <button class="btn" id="btn-import">Import gear (JSON)</button>
+      <button class="btn btn-danger" id="btn-reset">Reset to defaults</button>
+      <input type="file" id="file-import" accept="application/json" style="display:none">
+    </div>
+
+    <div class="gear-section">
+      <div class="gear-section-title">Telescopes <button class="btn btn-sm btn-primary" data-add="scopes">+ Add scope</button></div>
+      <div class="gear-grid" id="grid-scopes"></div>
+    </div>
+
+    <div class="gear-section">
+      <div class="gear-section-title">Cameras <button class="btn btn-sm btn-primary" data-add="cameras">+ Add camera</button></div>
+      <div class="gear-grid" id="grid-cameras"></div>
+    </div>
+
+    <div class="gear-section">
+      <div class="gear-section-title">Mounts <button class="btn btn-sm btn-primary" data-add="mounts">+ Add mount</button></div>
+      <div class="gear-grid" id="grid-mounts"></div>
+    </div>
+
+    <div class="gear-section">
+      <div class="gear-section-title">Filters <button class="btn btn-sm btn-primary" data-add="filters">+ Add filter</button></div>
+      <div class="gear-grid" id="grid-filters"></div>
+    </div>
+  </div>
+</div>
+
+<!-- METHODOLOGY VIEW -->
+<div id="view-method" class="view">
+  <div class="method-wrap">
+    <h2>Why sub-length matters</h2>
+    <p>Every pixel accumulates two things during an exposure: signal from your target, and noise from several sources — sky background shot noise, the camera's read noise, and dark current shot noise. Stacking many subs averages out random noise, but read noise is paid <em>once per sub</em>, so short subs pay it more often per hour of total integration. The goal is a sub just long enough that sky-background shot noise dominates the noise budget, so read noise becomes negligible — beyond that point, longer subs buy almost nothing extra per hour, they just risk saturating bright cores and cost you more frames lost to satellites, wind, and guiding blips.</p>
+
+    <h2>Sky-noise-limited exposure length</h2>
+    <p>For a chosen tolerance — how much extra stacked noise you'll accept above the theoretical (zero read-noise) minimum — the optimal sub length has a closed form. If <code>k</code> is the accepted noise multiplier (e.g. <code>k = 1.05</code> for 5% extra noise) and <code>C = 1 / (k² − 1)</code>:</p>
+    <span class="formula">t_opt = C · R² / (P − C · D)</span>
+    <p>where <code>R</code> is read noise (e⁻), <code>P</code> is the sky-background electron rate (e⁻/px/s), and <code>D</code> is dark current (e⁻/px/s). A 5% penalty gives C≈10, a 2% penalty gives C≈25 — the curve flattens fast, which is why the app defaults to a 5% target rather than chasing zero.</p>
+
+    <h2>Estimating sky electron rate</h2>
+    <p>Sky background is an extended source, so — unlike point-source targets — its per-pixel signal rate depends only on focal ratio and pixel size, not aperture directly (a faster system delivers more sky photons per pixel regardless of how big the objective is):</p>
+    <span class="formula">P = K · (pixel_µm)² / f_ratio² · QE · τ_filter · 10^(0.4·(SQM_ref − SQM))</span>
+    <p>Here <code>τ_filter</code> is the fraction of broadband sky-glow the filter passes — approximated from the filter's total bandpass width relative to a ~300nm broadband reference, so a 12nm dual-narrowband filter transmits roughly 4% of the sky-glow continuum a broadband filter would. <code>K</code> is a calibration constant tuned to typical field-reported background rates; it and <code>SQM_ref</code> are engineering approximations, not a laboratory-calibrated zero point.</p>
+    <p><strong>This theoretical estimate is a starting point, not ground truth.</strong> The most accurate number comes from switching to <strong>Measured</strong> mode and reading the mean background ADU straight off an actual test sub taken with your gain and filter — the app converts that directly to e⁻/s using your camera's e⁻/ADU at that gain.</p>
+
+    <h2>Saturation ceiling</h2>
+    <p>Independent of noise theory, a sub can simply run too long and clip. The app caps recommended length so sky background alone never exceeds a configurable fraction of full well (default 70%), leaving headroom for the target's own signal:</p>
+    <span class="formula">t_sat = headroom · FullWell(e⁻) / P</span>
+    <p>The final recommendation is <code>min(t_opt, t_sat)</code>, labelled by whichever constraint is binding.</p>
+
+    <h2>Guiding match</h2>
+    <p>Guide RMS is a near-continuous correction residual, not something that grows with sub length once your guide loop is faster than a few seconds — so it doesn't set a hard time ceiling the way noise and saturation do. What it <em>does</em> set is whether your stars stay round at your pixel scale. The rule of thumb used here: guide RMS at or below ~30% of pixel scale gives essentially round stars; above ~100% of pixel scale, expect visible elongation.</p>
+
+    <h2>Caveats</h2>
+    <ul>
+      <li>Gain→read-noise/full-well curves are seeded from published manufacturer figures and community measurements where manufacturer PDFs weren't directly accessible — edit them in the Gear Library if you have your own measured values.</li>
+      <li>The theoretical sky-rate model is a relative, order-of-magnitude estimate calibrated against typical reported values, not a photometric instrument. Measured mode (an actual test sub) is always more accurate for your specific sky, moon phase, and light-pollution conditions on the night in question.</li>
+      <li>Dark current is assumed near-zero for a cooled camera at typical setpoints unless you override it.</li>
+    </ul>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════ DATA MODEL ══════════════════════════
+const LS = { gear: 's100_sub_gear_v1', calc: 's100_sub_calc_v1' };
+
+function defaultGear() {
+  return {
+    scopes: [
+      { id: 'fra300', name: 'Askar FRA300 Pro', aperture_mm: 60, focal_length_mm: 300, reducers: [] },
+      { id: '103apo', name: 'Askar 103APO', aperture_mm: 103, focal_length_mm: 700,
+        reducers: [ { name: '0.8x reducer/flattener', factor: 0.8 }, { name: '0.6x reducer/flattener', factor: 0.6 } ] }
+    ],
+    cameras: [
+      { id: 'asi585', name: 'ZWO ASI585MC Pro', pixel_um: 2.9, res_w: 3840, res_h: 2160, qe: 0.91,
+        bit_depth: 16, dark_current_e_s: 0.005, max_gain: 600,
+        gain_curve: [ {gain:0, rn:3.3, fw:40000}, {gain:100, rn:1.8, fw:40000}, {gain:200, rn:0.9, fw:13500}, {gain:400, rn:0.8, fw:6000} ] },
+      { id: 'atr2600c', name: 'ToupTek ATR2600C', pixel_um: 3.76, res_w: 6224, res_h: 4168, qe: 0.80,
+        bit_depth: 16, dark_current_e_s: 0.004, max_gain: 500,
+        gain_curve: [ {gain:0, rn:3.3, fw:50000}, {gain:100, rn:1.5, fw:14700}, {gain:300, rn:1.0, fw:3700} ] }
+    ],
+    mounts: [
+      { id: 'cem26', name: 'iOptron CEM26', guide_rms_arcsec: 0.27 }
+    ],
+    filters: [
+      { id: 'uvir', name: 'Baader UV/IR Cut', type: 'broadband', bandwidth_nm: 300, transmission: 0.98 },
+      { id: 'd1', name: 'Askar D1 (Hα/OIII duo)', type: 'narrowband', bandwidth_nm: 12, transmission: 0.90 },
+      { id: 'd2', name: 'Askar D2 (OIII/SII duo)', type: 'narrowband', bandwidth_nm: 12, transmission: 0.90 }
+    ]
+  };
+}
+
+function loadGear() {
+  try {
+    const raw = localStorage.getItem(LS.gear);
+    if (raw) return JSON.parse(raw);
+  } catch (e) {}
+  const d = defaultGear();
+  saveGear(d);
+  return d;
+}
+function saveGear(g) { localStorage.setItem(LS.gear, JSON.stringify(g)); }
+
+let GEAR = loadGear();
+
+function uid(prefix) { return prefix + '_' + Math.random().toString(36).slice(2, 9); }
+
+// ══════════════════════════ PHYSICS ══════════════════════════
+const K_CAL = 6;        // sky-rate calibration constant (see Methodology tab)
+const SQM_REF = 21.5;   // reference dark-sky SQM for calibration
+const REF_BANDWIDTH_NM = 300; // broadband reference passband width
+
+const BORTLE_SQM = { 1:21.85, 1.5:21.8, 2:21.75, 2.5:21.68, 3:21.6, 3.5:21.45, 4:21.3, 4.5:21.0,
+  5:20.0, 5.5:19.75, 6:19.5, 6.5:19.1, 7:18.75, 7.5:18.4, 8:18.0, 8.5:17.75, 9:17.5 };
+
+function bortleToSQM(b) {
+  if (BORTLE_SQM[b] !== undefined) return BORTLE_SQM[b];
+  const keys = Object.keys(BORTLE_SQM).map(Number).sort((a,c)=>a-c);
+  for (let i=0;i<keys.length-1;i++){
+    if (b>=keys[i] && b<=keys[i+1]){
+      const t=(b-keys[i])/(keys[i+1]-keys[i]);
+      return BORTLE_SQM[keys[i]] + t*(BORTLE_SQM[keys[i+1]]-BORTLE_SQM[keys[i]]);
+    }
+  }
+  return 21.0;
+}
+
+function interp(curve, gain, key) {
+  const sorted = [...curve].sort((a,b)=>a.gain-b.gain);
+  if (gain <= sorted[0].gain) return sorted[0][key];
+  for (let i=0;i<sorted.length-1;i++){
+    if (gain >= sorted[i].gain && gain <= sorted[i+1].gain){
+      const t=(gain-sorted[i].gain)/(sorted[i+1].gain-sorted[i].gain);
+      return sorted[i][key] + t*(sorted[i+1][key]-sorted[i][key]);
+    }
+  }
+  return sorted[sorted.length-1][key];
+}
+
+function pixelScaleArcsec(pixelUm, flMm) { return 206.265 * pixelUm / flMm; }
+function fRatio(flMm, apertureMm) { return flMm / apertureMm; }
+
+function filterTau(filter) {
+  return Math.min(1, filter.bandwidth_nm / REF_BANDWIDTH_NM) * (filter.transmission ?? 1);
+}
+
+function theoreticalSkyRate({ pixelUm, fr, qe, tau, sqm }) {
+  const rel = Math.pow(10, 0.4 * (SQM_REF - sqm));
+  return K_CAL * (pixelUm*pixelUm) / (fr*fr) * qe * tau * rel;
+}
+
+function measuredSkyRate({ meanAdu, biasAdu, testExpS, eGain }) {
+  return Math.max(0, (meanAdu - biasAdu) * eGain / testExpS);
+}
+
+function noisePenaltyToC(pctExtra) {
+  const k = 1 + pctExtra/100;
+  return 1 / (k*k - 1);
+}
+
+function optTime(R, D, P, C) {
+  const denom = P - C*D;
+  if (denom <= 0) return Infinity;
+  return C * R * R / denom;
+}
+
+function satTime(fullWell, P, headroomPct) {
+  if (P <= 0) return Infinity;
+  return (headroomPct/100) * fullWell / P;
+}
+
+function guidingBadge(rms, pxScale) {
+  const ratio = rms / pxScale;
+  if (ratio <= 0.3) return { label: 'Excellent match — round stars', cls: 'badge-good' };
+  if (ratio <= 0.5) return { label: 'Good match', cls: 'badge-good' };
+  if (ratio <= 1.0) return { label: 'Adequate — mild bloat possible', cls: 'badge-warn' };
+  return { label: 'Undersampled for this guiding — expect elongation', cls: 'badge-bad' };
+}
+
+function fmtTime(s) {
+  if (!isFinite(s)) return '—';
+  if (s < 1) return (s*1000).toFixed(0) + ' ms';
+  if (s < 120) return s.toFixed(1) + ' s';
+  const m = Math.floor(s/60), rem = Math.round(s%60);
+  return `${m}m ${rem.toString().padStart(2,'0')}s`;
+}
+
+// ══════════════════════════ CALCULATOR UI ══════════════════════════
+let calcMode = 'theory';
+
+function populateSelects() {
+  const sc = document.getElementById('sel-scope');
+  sc.innerHTML = GEAR.scopes.map(s => `<option value="${s.id}">${esc(s.name)}</option>`).join('');
+  const cam = document.getElementById('sel-camera');
+  cam.innerHTML = GEAR.cameras.map(c => `<option value="${c.id}">${esc(c.name)}</option>`).join('');
+  const mnt = document.getElementById('sel-mount');
+  mnt.innerHTML = GEAR.mounts.map(m => `<option value="${m.id}">${esc(m.name)}</option>`).join('');
+  const filt = document.getElementById('sel-filter');
+  filt.innerHTML = GEAR.filters.map(f => `<option value="${f.id}">${esc(f.name)}</option>`).join('');
+  updateReducerOptions();
+}
+
+function updateReducerOptions() {
+  const scope = GEAR.scopes.find(s => s.id === document.getElementById('sel-scope').value) || GEAR.scopes[0];
+  const field = document.getElementById('reducer-field');
+  const sel = document.getElementById('sel-reducer');
+  if (scope && scope.reducers && scope.reducers.length) {
+    field.style.display = '';
+    sel.innerHTML = `<option value="native">Native (f/${(scope.focal_length_mm/scope.aperture_mm).toFixed(1)})</option>` +
+      scope.reducers.map((r,i) => `<option value="${i}">${esc(r.name)} (f/${((scope.focal_length_mm*r.factor)/scope.aperture_mm).toFixed(1)})</option>`).join('');
+  } else {
+    field.style.display = 'none';
+  }
+}
+
+function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+function currentScopeFL() {
+  const scope = GEAR.scopes.find(s => s.id === document.getElementById('sel-scope').value);
+  const redSel = document.getElementById('sel-reducer');
+  if (scope.reducers && scope.reducers.length && redSel.value !== 'native') {
+    const r = scope.reducers[+redSel.value];
+    return scope.focal_length_mm * r.factor;
+  }
+  return scope.focal_length_mm;
+}
+
+function runCalc() {
+  const scope = GEAR.scopes.find(s => s.id === document.getElementById('sel-scope').value);
+  const camera = GEAR.cameras.find(c => c.id === document.getElementById('sel-camera').value);
+  const mount = GEAR.mounts.find(m => m.id === document.getElementById('sel-mount').value);
+  const filter = GEAR.filters.find(f => f.id === document.getElementById('sel-filter').value);
+  if (!scope || !camera || !mount || !filter) return;
+
+  const fl = currentScopeFL();
+  const fr = fRatio(fl, scope.aperture_mm);
+  const pxScale = pixelScaleArcsec(camera.pixel_um, fl);
+
+  const gain = +document.getElementById('rng-gain').value;
+  document.getElementById('rng-gain').max = camera.max_gain;
+  document.getElementById('val-gain').textContent = gain;
+  const R = interp(camera.gain_curve, gain, 'rn');
+  const FW = interp(camera.gain_curve, gain, 'fw');
+  const eGain = FW / (Math.pow(2, camera.bit_depth) - 1);
+  document.getElementById('gain-derived').textContent =
+    `Read noise ${R.toFixed(2)}e⁻ · Full well ${Math.round(FW).toLocaleString()}e⁻ · ${eGain.toFixed(3)} e⁻/ADU`;
+
+  const darkOverride = document.getElementById('inp-dark-override').value;
+  const D = darkOverride !== '' ? +darkOverride : camera.dark_current_e_s;
+
+  const bortle = +document.getElementById('rng-bortle').value;
+  document.getElementById('val-bortle').textContent = bortle;
+  const sqmOverride = document.getElementById('inp-sqm-override').value;
+  const sqm = sqmOverride !== '' ? +sqmOverride : bortleToSQM(bortle);
+
+  const tau = filterTau(filter);
+
+  let P;
+  if (calcMode === 'theory') {
+    P = theoreticalSkyRate({ pixelUm: camera.pixel_um, fr, qe: camera.qe, tau, sqm });
+  } else {
+    const testExpS = +document.getElementById('inp-test-exp').value || 1;
+    const meanAdu = +document.getElementById('inp-test-adu').value || 0;
+    const biasAdu = +document.getElementById('inp-test-bias').value || 0;
+    P = measuredSkyRate({ meanAdu, biasAdu, testExpS, eGain });
+  }
+
+  const penaltyPct = +document.getElementById('rng-penalty').value;
+  document.getElementById('val-penalty').textContent = penaltyPct + '%';
+  const headroomPct = +document.getElementById('rng-headroom').value;
+  document.getElementById('val-headroom').textContent = headroomPct + '%';
+  const C = noisePenaltyToC(penaltyPct);
+
+  const tOpt = optTime(R, D, P, C);
+  const tSat = satTime(FW, P, headroomPct);
+  const recommended = Math.min(tOpt, tSat);
+  const limitedBy = tSat < tOpt ? 'sat' : 'noise';
+
+  document.getElementById('hero-value').textContent = fmtTime(recommended);
+  document.getElementById('hero-sub').textContent =
+    `sky background ${P.toFixed(1)} e⁻/px/s · read noise ${R.toFixed(2)} e⁻ · f/${fr.toFixed(1)} · ${pxScale.toFixed(2)}″/px`;
+  document.getElementById('hero-badge').innerHTML = limitedBy === 'sat'
+    ? `<span class="hero-badge badge-sat">Saturation-limited</span>`
+    : `<span class="hero-badge badge-noise">Noise-limited</span>`;
+
+  const skyShotNoise = Math.sqrt(Math.max(0, P * recommended));
+  const total = skyShotNoise + R;
+  const skyPct = total > 0 ? (skyShotNoise/total*100) : 50;
+  const readPct = 100 - skyPct;
+  document.getElementById('noise-bar').innerHTML =
+    `<div class="noise-seg sky" style="width:${skyPct}%">${skyPct>15?skyShotNoise.toFixed(2)+'e⁻':''}</div>` +
+    `<div class="noise-seg read" style="width:${readPct}%">${readPct>15?R.toFixed(2)+'e⁻':''}</div>`;
+
+  document.getElementById('stat-grid').innerHTML = [
+    ['Effective focal length', fl.toFixed(0) + ' mm'],
+    ['Focal ratio', 'f/' + fr.toFixed(2)],
+    ['Pixel scale', pxScale.toFixed(2) + ' ″/px'],
+    ['Sky rate', P.toFixed(2) + ' e⁻/px/s'],
+    ['Read noise', R.toFixed(2) + ' e⁻'],
+    ['Full well', Math.round(FW).toLocaleString() + ' e⁻'],
+    ['Saturation cap', fmtTime(tSat)],
+    ['Noise-optimal', fmtTime(tOpt)],
+  ].map(([l,v]) => `<div class="stat-item"><span class="stat-label">${l}</span><span class="stat-val gold">${v}</span></div>`).join('');
+
+  const rmsOverride = document.getElementById('inp-rms-override').value;
+  const rms = rmsOverride !== '' ? +rmsOverride : mount.guide_rms_arcsec;
+  const gb = guidingBadge(rms, pxScale);
+  document.getElementById('guiding-block').innerHTML =
+    `<div class="stat-grid">
+      <div class="stat-item"><span class="stat-label">Guide RMS in use</span><span class="stat-val">${rms.toFixed(2)}″</span></div>
+      <div class="stat-item"><span class="stat-label">Pixel scale</span><span class="stat-val">${pxScale.toFixed(2)}″/px</span></div>
+      <div class="stat-item"><span class="stat-label">RMS / pixel scale</span><span class="stat-val">${(rms/pxScale).toFixed(2)}×</span></div>
+    </div>
+    <div style="margin-top:0.8rem"><span class="badge ${gb.cls}">${gb.label}</span></div>`;
+
+  const totalHours = +document.getElementById('inp-total-hours').value;
+  const intCard = document.getElementById('integration-card');
+  if (totalHours && recommended > 0 && isFinite(recommended)) {
+    intCard.style.display = '';
+    const totalSec = totalHours * 3600;
+    const nSubs = Math.ceil(totalSec / recommended);
+    const bytesPerFrame = camera.res_w * camera.res_h * 2;
+    const totalGB = (nSubs * bytesPerFrame) / (1024**3);
+    document.getElementById('integration-grid').innerHTML = [
+      ['Subs required', nSubs.toLocaleString()],
+      ['Actual integration', (nSubs*recommended/3600).toFixed(2) + 'h'],
+      ['Estimated data volume', totalGB.toFixed(1) + ' GB'],
+    ].map(([l,v]) => `<div class="stat-item"><span class="stat-label">${l}</span><span class="stat-val gold">${v}</span></div>`).join('');
+  } else {
+    intCard.style.display = 'none';
+  }
+
+  document.getElementById('calc-note').innerHTML = calcMode === 'theory'
+    ? `<strong>Theoretical estimate.</strong> Sky background derived from Bortle ${bortle} (SQM ${sqm.toFixed(2)}) via a calibrated approximation — see Methodology. For best accuracy, switch to Measured mode with a real test sub once you're at the eyepiece.`
+    : `<strong>Measured from test sub.</strong> Sky rate computed directly from your ${(+document.getElementById('inp-test-exp').value||0)}s test exposure at gain ${gain}. This is the most accurate mode available.`;
+}
+
+function wireCalcInputs() {
+  const ids = ['sel-scope','sel-reducer','sel-camera','sel-mount','sel-filter','rng-gain','rng-bortle',
+    'inp-rms-override','inp-sqm-override','inp-test-exp','inp-test-adu','inp-test-bias','rng-penalty',
+    'rng-headroom','inp-dark-override','inp-total-hours'];
+  ids.forEach(id => {
+    const el = document.getElementById(id);
+    el.addEventListener('input', () => {
+      if (id === 'sel-scope') updateReducerOptions();
+      runCalc();
+    });
+  });
+
+  document.getElementById('btn-mode-theory').addEventListener('click', () => setMode('theory'));
+  document.getElementById('btn-mode-measured').addEventListener('click', () => setMode('measured'));
+}
+
+function setMode(mode) {
+  calcMode = mode;
+  document.getElementById('btn-mode-theory').classList.toggle('active', mode==='theory');
+  document.getElementById('btn-mode-measured').classList.toggle('active', mode==='measured');
+  document.getElementById('theory-fields').style.display = mode==='theory' ? '' : 'none';
+  document.getElementById('measured-fields').style.display = mode==='measured' ? '' : 'none';
+  runCalc();
+}
+
+// ══════════════════════════ GEAR LIBRARY UI ══════════════════════════
+function renderGearLibrary() {
+  renderScopes(); renderCameras(); renderMounts(); renderFilters();
+}
+
+function renderScopes() {
+  const grid = document.getElementById('grid-scopes');
+  grid.innerHTML = GEAR.scopes.map(s => `
+    <div class="gear-card" data-id="${s.id}">
+      <div class="gear-card-head">
+        <div class="gear-card-name">${esc(s.name)}</div>
+      </div>
+      <div class="gear-card-spec">
+        Aperture ${s.aperture_mm}mm · FL ${s.focal_length_mm}mm · f/${(s.focal_length_mm/s.aperture_mm).toFixed(1)}<br>
+        ${s.reducers.length ? 'Reducers: ' + s.reducers.map(r=>r.name).join(', ') : 'No reducers configured'}
+      </div>
+      <div class="gear-card-actions">
+        <button class="btn btn-sm" data-edit="scopes:${s.id}">Edit</button>
+        <button class="btn btn-sm btn-danger" data-del="scopes:${s.id}">Delete</button>
+      </div>
+      <div class="gear-edit" id="edit-scopes-${s.id}">
+        <div class="field"><label>Name</label><input type="text" data-f="name" value="${esc(s.name)}"></div>
+        <div class="row2">
+          <div class="field"><label>Aperture (mm)</label><input type="number" data-f="aperture_mm" value="${s.aperture_mm}"></div>
+          <div class="field"><label>Focal length (mm)</label><input type="number" data-f="focal_length_mm" value="${s.focal_length_mm}"></div>
+        </div>
+        <div class="field"><label>Reducers (name:factor, comma-separated)</label>
+          <input type="text" data-f="reducers" value="${s.reducers.map(r=>r.name+':'+r.factor).join(', ')}" placeholder="0.8x reducer:0.8">
+        </div>
+        <button class="btn btn-primary btn-sm" data-save="scopes:${s.id}">Save</button>
+      </div>
+    </div>`).join('');
+  wireGearCardEvents('scopes');
+}
+
+function renderCameras() {
+  const grid = document.getElementById('grid-cameras');
+  grid.innerHTML = GEAR.cameras.map(c => `
+    <div class="gear-card" data-id="${c.id}">
+      <div class="gear-card-head"><div class="gear-card-name">${esc(c.name)}</div></div>
+      <div class="gear-card-spec">
+        ${c.pixel_um}µm px · ${c.res_w}×${c.res_h} · QE ${(c.qe*100).toFixed(0)}%<br>
+        Dark current ${c.dark_current_e_s} e⁻/px/s · ${c.bit_depth}-bit
+      </div>
+      <table class="curve-table">
+        <tr><th>Gain</th><th>RN (e⁻)</th><th>Full well (e⁻)</th></tr>
+        ${c.gain_curve.map((g,i)=>`<tr><td>${g.gain}</td><td>${g.rn}</td><td>${g.fw}</td></tr>`).join('')}
+      </table>
+      <div class="gear-card-actions">
+        <button class="btn btn-sm" data-edit="cameras:${c.id}">Edit</button>
+        <button class="btn btn-sm btn-danger" data-del="cameras:${c.id}">Delete</button>
+      </div>
+      <div class="gear-edit" id="edit-cameras-${c.id}">
+        <div class="field"><label>Name</label><input type="text" data-f="name" value="${esc(c.name)}"></div>
+        <div class="row2">
+          <div class="field"><label>Pixel size (µm)</label><input type="number" step="0.01" data-f="pixel_um" value="${c.pixel_um}"></div>
+          <div class="field"><label>QE peak (0-1)</label><input type="number" step="0.01" data-f="qe" value="${c.qe}"></div>
+        </div>
+        <div class="row2">
+          <div class="field"><label>Res width (px)</label><input type="number" data-f="res_w" value="${c.res_w}"></div>
+          <div class="field"><label>Res height (px)</label><input type="number" data-f="res_h" value="${c.res_h}"></div>
+        </div>
+        <div class="row2">
+          <div class="field"><label>Bit depth</label><input type="number" data-f="bit_depth" value="${c.bit_depth}"></div>
+          <div class="field"><label>Max gain</label><input type="number" data-f="max_gain" value="${c.max_gain}"></div>
+        </div>
+        <div class="field"><label>Dark current (e⁻/px/s)</label><input type="number" step="0.001" data-f="dark_current_e_s" value="${c.dark_current_e_s}"></div>
+        <div class="field"><label>Gain curve (gain:rn:fw, comma-separated)</label>
+          <input type="text" data-f="gain_curve" value="${c.gain_curve.map(g=>g.gain+':'+g.rn+':'+g.fw).join(', ')}">
+        </div>
+        <button class="btn btn-primary btn-sm" data-save="cameras:${c.id}">Save</button>
+      </div>
+    </div>`).join('');
+  wireGearCardEvents('cameras');
+}
+
+function renderMounts() {
+  const grid = document.getElementById('grid-mounts');
+  grid.innerHTML = GEAR.mounts.map(m => `
+    <div class="gear-card" data-id="${m.id}">
+      <div class="gear-card-head"><div class="gear-card-name">${esc(m.name)}</div></div>
+      <div class="gear-card-spec">Typical guide RMS ${m.guide_rms_arcsec}″</div>
+      <div class="gear-card-actions">
+        <button class="btn btn-sm" data-edit="mounts:${m.id}">Edit</button>
+        <button class="btn btn-sm btn-danger" data-del="mounts:${m.id}">Delete</button>
+      </div>
+      <div class="gear-edit" id="edit-mounts-${m.id}">
+        <div class="field"><label>Name</label><input type="text" data-f="name" value="${esc(m.name)}"></div>
+        <div class="field"><label>Typical guide RMS (arcsec)</label><input type="number" step="0.01" data-f="guide_rms_arcsec" value="${m.guide_rms_arcsec}"></div>
+        <button class="btn btn-primary btn-sm" data-save="mounts:${m.id}">Save</button>
+      </div>
+    </div>`).join('');
+  wireGearCardEvents('mounts');
+}
+
+function renderFilters() {
+  const grid = document.getElementById('grid-filters');
+  grid.innerHTML = GEAR.filters.map(f => `
+    <div class="gear-card" data-id="${f.id}">
+      <div class="gear-card-head"><div class="gear-card-name">${esc(f.name)}</div></div>
+      <div class="gear-card-spec">${f.type} · ${f.bandwidth_nm}nm bandwidth · ${(f.transmission*100).toFixed(0)}% transmission</div>
+      <div class="gear-card-actions">
+        <button class="btn btn-sm" data-edit="filters:${f.id}">Edit</button>
+        <button class="btn btn-sm btn-danger" data-del="filters:${f.id}">Delete</button>
+      </div>
+      <div class="gear-edit" id="edit-filters-${f.id}">
+        <div class="field"><label>Name</label><input type="text" data-f="name" value="${esc(f.name)}"></div>
+        <div class="field"><label>Type</label>
+          <select data-f="type"><option value="broadband" ${f.type==='broadband'?'selected':''}>Broadband</option><option value="narrowband" ${f.type==='narrowband'?'selected':''}>Narrowband</option></select>
+        </div>
+        <div class="row2">
+          <div class="field"><label>Bandwidth (nm)</label><input type="number" data-f="bandwidth_nm" value="${f.bandwidth_nm}"></div>
+          <div class="field"><label>Transmission (0-1)</label><input type="number" step="0.01" data-f="transmission" value="${f.transmission}"></div>
+        </div>
+        <button class="btn btn-primary btn-sm" data-save="filters:${f.id}">Save</button>
+      </div>
+    </div>`).join('');
+  wireGearCardEvents('filters');
+}
+
+function wireGearCardEvents(category) {
+  document.querySelectorAll(`[data-edit^="${category}:"]`).forEach(btn => {
+    btn.addEventListener('click', () => {
+      const id = btn.dataset.edit.split(':')[1];
+      document.getElementById(`edit-${category}-${id}`).classList.toggle('open');
+    });
+  });
+  document.querySelectorAll(`[data-del^="${category}:"]`).forEach(btn => {
+    btn.addEventListener('click', () => {
+      const id = btn.dataset.del.split(':')[1];
+      if (GEAR[category].length <= 1) { alert('At least one item must remain in this category.'); return; }
+      if (!confirm('Delete this item?')) return;
+      GEAR[category] = GEAR[category].filter(x => x.id !== id);
+      saveGear(GEAR);
+      renderGearLibrary();
+      populateSelects();
+      runCalc();
+    });
+  });
+  document.querySelectorAll(`[data-save^="${category}:"]`).forEach(btn => {
+    btn.addEventListener('click', () => {
+      const id = btn.dataset.save.split(':')[1];
+      const item = GEAR[category].find(x => x.id === id);
+      const editEl = document.getElementById(`edit-${category}-${id}`);
+      editEl.querySelectorAll('[data-f]').forEach(inp => {
+        const f = inp.dataset.f;
+        if (f === 'reducers') {
+          item.reducers = inp.value.split(',').map(s=>s.trim()).filter(Boolean).map(s => {
+            const [name, factor] = s.split(':');
+            return { name: name.trim(), factor: +factor };
+          });
+        } else if (f === 'gain_curve') {
+          item.gain_curve = inp.value.split(',').map(s=>s.trim()).filter(Boolean).map(s => {
+            const [gain, rn, fw] = s.split(':').map(Number);
+            return { gain, rn, fw };
+          });
+        } else if (inp.type === 'number') {
+          item[f] = parseFloat(inp.value);
+        } else {
+          item[f] = inp.value;
+        }
+      });
+      saveGear(GEAR);
+      renderGearLibrary();
+      populateSelects();
+      runCalc();
+    });
+  });
+}
+
+function wireAddButtons() {
+  document.querySelectorAll('[data-add]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const cat = btn.dataset.add;
+      let item;
+      if (cat === 'scopes') item = { id: uid('scope'), name: 'New Telescope', aperture_mm: 80, focal_length_mm: 500, reducers: [] };
+      if (cat === 'cameras') item = { id: uid('cam'), name: 'New Camera', pixel_um: 3.76, res_w: 4144, res_h: 2822, qe: 0.8, bit_depth: 16, dark_current_e_s: 0.005, max_gain: 400, gain_curve: [{gain:0,rn:3,fw:40000},{gain:200,rn:1.2,fw:15000}] };
+      if (cat === 'mounts') item = { id: uid('mount'), name: 'New Mount', guide_rms_arcsec: 0.8 };
+      if (cat === 'filters') item = { id: uid('filt'), name: 'New Filter', type: 'broadband', bandwidth_nm: 300, transmission: 0.95 };
+      GEAR[cat].push(item);
+      saveGear(GEAR);
+      renderGearLibrary();
+      populateSelects();
+      const id = item.id;
+      setTimeout(() => document.getElementById(`edit-${cat}-${id}`)?.classList.add('open'), 10);
+    });
+  });
+}
+
+document.getElementById('btn-export').addEventListener('click', () => {
+  const blob = new Blob([JSON.stringify(GEAR, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'southern100-gear.json'; a.click();
+  URL.revokeObjectURL(url);
+});
+document.getElementById('btn-import').addEventListener('click', () => document.getElementById('file-import').click());
+document.getElementById('file-import').addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const data = JSON.parse(reader.result);
+      if (data.scopes && data.cameras && data.mounts && data.filters) {
+        GEAR = data; saveGear(GEAR); renderGearLibrary(); populateSelects(); runCalc();
+      } else { alert('Invalid gear file.'); }
+    } catch (err) { alert('Could not parse file.'); }
+  };
+  reader.readAsText(file);
+});
+document.getElementById('btn-reset').addEventListener('click', () => {
+  if (!confirm('Reset all gear to the default Southern 100 lineup? This discards custom edits.')) return;
+  GEAR = defaultGear();
+  saveGear(GEAR);
+  renderGearLibrary(); populateSelects(); runCalc();
+});
+
+// ══════════════════════════ VIEW SWITCHING ══════════════════════════
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.getElementById(`view-${tab.dataset.view}`).classList.add('active');
+    tab.classList.add('active');
+  });
+});
+
+// ══════════════════════════ INIT ══════════════════════════
+populateSelects();
+wireCalcInputs();
+wireAddButtons();
+renderGearLibrary();
+runCalc();
+</script>
+</body>
+</html>
