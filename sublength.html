@@ -360,12 +360,33 @@ details.advanced .field { margin-top: 0.8rem; }
           <div class="field">
             <label>Brightest star in field (magnitude)</label>
             <input type="number" id="inp-star-mag" step="0.1" placeholder="leave blank to use flat cap below">
-            <div class="hint">Frame the target in Stellarium at your rig's actual FOV/rotation, read off the magnitude of the brightest star in frame, and enter it here. Overrides the flat star-protection cap with a real point-source saturation time for this specific field.</div>
+            <div class="hint">Frame the target in Stellarium at your rig's actual FOV/rotation, read off the magnitude of the brightest star in frame, and enter it here. Overrides the flat star-protection cap with a point-source saturation time for this specific field.</div>
           </div>
           <div class="field">
-            <label>Star FWHM / seeing <span class="hint" style="display:inline;text-transform:none;">(arcsec)</span></label>
-            <input type="number" id="inp-star-fwhm" value="2.5" step="0.1">
-            <div class="hint">How tightly the star's light is spread across pixels — tighter seeing/better focus concentrates more electrons in fewer pixels, saturating sooner. 2–3″ is typical suburban seeing.</div>
+            <label>Estimation method</label>
+            <div class="toggle-row">
+              <button class="toggle-btn active" id="btn-star-theory" data-starmode="theory">Theoretical</button>
+              <button class="toggle-btn" id="btn-star-calibrated" data-starmode="calibrated">Calibrated (recommended)</button>
+            </div>
+          </div>
+          <div id="star-theory-fields">
+            <div class="field">
+              <label>Star FWHM / seeing <span class="hint" style="display:inline;text-transform:none;">(arcsec)</span></label>
+              <input type="number" id="inp-star-fwhm" value="2.5" step="0.1">
+              <div class="hint">How tightly the star's light is spread across pixels — tighter seeing/better focus concentrates more electrons in fewer pixels, saturating sooner. 2–3″ is typical suburban seeing.</div>
+            </div>
+            <div class="hint" style="margin-top:0.2rem">Rests on an unverified stellar flux zero-point and an idealised Gaussian PSF — treat as an order-of-magnitude guess. Switch to Calibrated once you have one real data point.</div>
+          </div>
+          <div id="star-calibrated-fields" style="display:none">
+            <div class="row2">
+              <div class="field"><label>Reference star mag</label><input type="number" id="inp-star-ref-mag" step="0.1" placeholder="e.g. 5.0"></div>
+              <div class="field"><label>Its peak ADU</label><input type="number" id="inp-star-ref-adu" step="1" placeholder="e.g. 45000"></div>
+            </div>
+            <div class="row2">
+              <div class="field"><label>Bias/offset ADU</label><input type="number" id="inp-star-ref-bias" step="1" value="256"></div>
+              <div class="field"><label>Sub length (s)</label><input type="number" id="inp-star-ref-exp" step="0.1" placeholder="e.g. 30"></div>
+            </div>
+            <div class="hint">Find an identifiable star in a real sub (Stellarium gives you its magnitude; your capture software's pixel inspector gives you its peak ADU). Assumes that sub was shot at the gain currently selected above. This scales to any other star via the magnitude ratio — no zero-point or PSF-shape guessing involved, so it's the trustworthy option.</div>
           </div>
         </div>
 
@@ -473,13 +494,16 @@ details.advanced .field { margin-top: 0.8rem; }
     <p>This protects against <em>sky background</em> saturation only. It does not protect against <em>target</em> saturation.</p>
 
     <h2>Bright-star saturation cap</h2>
-    <p>A star is a point source: it delivers far more photons per pixel per second than the diffuse sky ever does, so a sub can be nowhere near sky-saturated and still clip every bright star in the field — this is completely normal in narrowband imaging, where sky-noise-limited exposures often land in the 5–20 minute range while a bright star saturates in seconds. The app offers two ways to bound this:</p>
-    <p><strong>Flat cap (default, no data needed):</strong> a simple, editable practical ceiling (default 480s / 8min), independent of the noise and sky-saturation math. It's a guess, not a computed value — useful when you haven't looked anything up.</p>
-    <p><strong>Photometric cap (accurate, needs one number from Stellarium):</strong> frame the actual target at your rig's real FOV and rotation in Stellarium, read off the magnitude of the brightest star in shot, and enter it in the Target Star Check card. The app then computes a real peak-pixel electron rate for that star and derives the time until it saturates:</p>
-    <span class="formula">e_rate(peak) = N₀ · 10^(−0.4·mag) · A_aperture(cm²) · τ_filter · QE / (2π·σ_px²)</span>
+    <p>A star is a point source: it delivers far more photons per pixel per second than the diffuse sky ever does, so a sub can be nowhere near sky-saturated and still clip every bright star in the field — this is completely normal in narrowband imaging, where sky-noise-limited exposures often land in the 5–20 minute range while a bright star saturates in seconds. The app offers three ways to bound this, in increasing order of trust:</p>
+    <p><strong>Flat cap (no data needed):</strong> a simple, editable practical ceiling (default 480s / 8min), independent of the noise and sky-saturation math. It's a guess, not a computed value — useful when you haven't looked anything up.</p>
+    <p><strong>Theoretical (needs a star magnitude from Stellarium):</strong> frame the actual target at your rig's real FOV and rotation, read off the magnitude of the brightest star in shot, and enter it. The app computes a peak-pixel electron rate from first principles and derives the time until it saturates:</p>
+    <span class="formula">e_rate(peak) = N₀ · 10^(−0.4·mag) · A_aperture(cm²) · τ_filter · QE · frac(σ_px)</span>
     <span class="formula">t_star_sat = FullWell(e⁻) / e_rate(peak)</span>
-    <p>where <code>N₀</code> is the photon flux from a magnitude-0 star integrated across the same ~300nm reference broadband used for <code>τ_filter</code> above (so the same filter that cuts sky-glow continuum cuts stellar continuum the same way — a real, if approximate, physical link), <code>A_aperture</code> is the telescope's clear aperture area, and <code>σ_px</code> is the star's Gaussian PSF width in pixels, derived from your entered seeing/FWHM and the rig's pixel scale (tighter stars concentrate more electrons per pixel and saturate sooner). This is a genuine per-field, per-rig calculation — not a placeholder — though it still assumes a roughly flat stellar continuum and a Gaussian PSF, both reasonable approximations rather than exact photometry.</p>
-    <p>Whichever cap is active, the final recommendation is <code>min(t_opt, t_sat, t_star_cap)</code>, and the badge tells you which one is actually binding.</p>
+    <p>where <code>N₀</code> is the photon flux from a magnitude-0 star integrated across the same ~300nm reference broadband used for <code>τ_filter</code> above (so the same filter that cuts sky-glow continuum cuts stellar continuum the same way — a real, if approximate, physical link), <code>A_aperture</code> is the telescope's clear aperture area, and <code>frac(σ_px)</code> is the fraction of the star's Gaussian PSF landing in the single peak pixel, properly integrated over the pixel (not just point-sampled) from your entered seeing/FWHM and the rig's pixel scale. <strong>Treat this as an order-of-magnitude estimate, not a trustworthy number</strong> — it depends on an unverified absolute zero-point and an idealised PSF shape, and testing found it can disagree with real-world observation by a meaningful factor.</p>
+    <p><strong>Calibrated (recommended, needs one real data point):</strong> instead of trusting a theoretical zero-point, give the app one measured reference — a star of known magnitude and the peak ADU it actually reached in a real sub of known length, at the gain currently selected. The app scales to your target star purely via the magnitude flux ratio:</p>
+    <span class="formula">e_rate(peak, target) = [(ADU_ref − bias) · e⁻/ADU / t_ref] · 10^(−0.4·(mag_target − mag_ref))</span>
+    <p>This sidesteps the zero-point and PSF-shape guesswork entirely — the only physics involved is the magnitude system's flux ratio, which is exact — so as long as the reference star was shot at the same gain and filter as your planned session, this is the number to trust.</p>
+    <p>Whichever cap is active, the final recommendation is <code>min(t_opt, t_sat, t_star_cap)</code>, and the badge tells you which one is actually binding and which method produced it.</p>
 
     <h2>Guiding match</h2>
     <p>Guide RMS is a near-continuous correction residual, not something that grows with sub length once your guide loop is faster than a few seconds — so it doesn't set a hard time ceiling the way noise and saturation do. What it <em>does</em> set is whether your stars stay round at your pixel scale. The rule of thumb used here: guide RMS at or below ~30% of pixel scale gives essentially round stars; above ~100% of pixel scale, expect visible elongation.</p>
@@ -510,7 +534,7 @@ function defaultGear() {
         gain_curve: [ {gain:0, rn:3.3, fw:40000}, {gain:100, rn:1.8, fw:40000}, {gain:200, rn:0.9, fw:13500}, {gain:400, rn:0.8, fw:6000} ] },
       { id: 'atr2600c', name: 'ToupTek ATR2600C', pixel_um: 3.76, res_w: 6224, res_h: 4168, qe: 0.80,
         bit_depth: 16, dark_current_e_s: 0.002, max_gain: 500,
-        gain_curve: [ {gain:0, rn:3.3, fw:50000}, {gain:100, rn:1.5, fw:14700}, {gain:300, rn:1.0, fw:3700} ] }
+        gain_curve: [ {gain:0, rn:3.3, fw:51000}, {gain:100, rn:1.5, fw:14700}, {gain:300, rn:1.0, fw:3700} ] }
     ],
     mounts: [
       { id: 'cem26', name: 'iOptron CEM26', guide_rms_arcsec: 0.27 }
@@ -605,15 +629,41 @@ function satTime(fullWell, P, headroomPct) {
 // N0: photon flux (photons/s/cm^2) from a mag-0 star integrated across the same
 // ~300nm reference broadband used for filterTau(), so a real filter's fractional
 // bandwidth reduces star continuum the same way it reduces sky-glow continuum.
+// This absolute zero-point is a first-principles approximation, not a verified
+// instrument calibration — the Calibrated mode below avoids depending on it.
 const STAR_N0_PHOTONS_CM2_S = 3.0e6;
 
-function starPeakElectronRate({ mag, apertureMm, qe, tau, fwhmArcsec, pixelScaleArcsec }) {
+function erf(x) {
+  // Abramowitz-Stegun 7.1.26 approximation, |error| < 1.5e-7
+  const sign = x < 0 ? -1 : 1;
+  x = Math.abs(x);
+  const a1=0.254829592, a2=-0.284496736, a3=1.421413741, a4=-1.453152027, a5=1.061405429, p=0.3275911;
+  const t = 1/(1+p*x);
+  const y = 1 - (((((a5*t+a4)*t)+a3)*t+a2)*t+a1)*t*Math.exp(-x*x);
+  return sign*y;
+}
+
+// Fraction of a 2D Gaussian PSF's total flux landing in the single central pixel
+// (proper integral over a unit square, not a point-sample of the peak intensity).
+function gaussianPeakPixelFraction(sigmaPx) {
+  return Math.pow(erf(0.5 / (sigmaPx * Math.SQRT2)), 2);
+}
+
+function starPeakElectronRateTheoretical({ mag, apertureMm, qe, tau, fwhmArcsec, pixelScaleArcsec }) {
   const apertureCm = apertureMm / 10;
   const areaCm2 = Math.PI * (apertureCm/2) ** 2;
   const photonRate = STAR_N0_PHOTONS_CM2_S * Math.pow(10, -0.4*mag) * areaCm2 * tau;
   const eRateTotal = photonRate * qe;
   const sigmaPx = fwhmArcsec / pixelScaleArcsec / 2.3548;
-  return eRateTotal / (2 * Math.PI * sigmaPx * sigmaPx);
+  return eRateTotal * gaussianPeakPixelFraction(sigmaPx);
+}
+
+// Calibrated: given one real reference star's measured peak ADU, scale to the
+// target star's magnitude via the (purely physical, zero-point-free) flux ratio.
+function starPeakElectronRateCalibrated({ mag, refMag, refAdu, refBiasAdu, refExpS, eGain }) {
+  const refPeakE = Math.max(0, refAdu - refBiasAdu) * eGain;
+  const refPeakRate = refPeakE / refExpS;
+  return refPeakRate * Math.pow(10, -0.4*(mag - refMag));
 }
 
 function guidingBadge(rms, pxScale) {
@@ -634,6 +684,7 @@ function fmtTime(s) {
 
 // ══════════════════════════ CALCULATOR UI ══════════════════════════
 let calcMode = 'theory';
+let starCalcMode = 'theory';
 
 function populateSelects() {
   const sc = document.getElementById('sel-scope');
@@ -726,24 +777,42 @@ function runCalc() {
   let tStarCap, starPeakRate = null, starMode;
   if (starMagInput !== '') {
     const mag = +starMagInput;
-    const fwhmArcsec = +document.getElementById('inp-star-fwhm').value || 2.5;
-    starPeakRate = starPeakElectronRate({ mag, apertureMm: scope.aperture_mm, qe: camera.qe, tau, fwhmArcsec, pixelScaleArcsec: pxScale });
-    tStarCap = starPeakRate > 0 ? FW / starPeakRate : Infinity;
-    starMode = 'photometric';
+    if (starCalcMode === 'calibrated') {
+      const refMag = +document.getElementById('inp-star-ref-mag').value;
+      const refAdu = +document.getElementById('inp-star-ref-adu').value;
+      const refBiasAdu = +document.getElementById('inp-star-ref-bias').value || 0;
+      const refExpS = +document.getElementById('inp-star-ref-exp').value;
+      if (isFinite(refMag) && isFinite(refAdu) && refExpS > 0) {
+        starPeakRate = starPeakElectronRateCalibrated({ mag, refMag, refAdu, refBiasAdu, refExpS, eGain });
+        tStarCap = starPeakRate > 0 ? FW / starPeakRate : Infinity;
+        starMode = 'calibrated';
+      } else {
+        tStarCap = starCapInput > 0 ? starCapInput : Infinity;
+        starMode = 'flat';
+      }
+    } else {
+      const fwhmArcsec = +document.getElementById('inp-star-fwhm').value || 2.5;
+      starPeakRate = starPeakElectronRateTheoretical({ mag, apertureMm: scope.aperture_mm, qe: camera.qe, tau, fwhmArcsec, pixelScaleArcsec: pxScale });
+      tStarCap = starPeakRate > 0 ? FW / starPeakRate : Infinity;
+      starMode = 'theoretical';
+    }
   } else {
     tStarCap = starCapInput > 0 ? starCapInput : Infinity;
     starMode = 'flat';
   }
 
   const recommended = Math.min(tOpt, tSat, tStarCap);
-  const limitedBy = recommended === tStarCap && tStarCap < tOpt && tStarCap < tSat ? (starMode === 'photometric' ? 'starphoto' : 'star')
+  const limitedBy = recommended === tStarCap && tStarCap < tOpt && tStarCap < tSat
+    ? (starMode === 'calibrated' ? 'starcal' : starMode === 'theoretical' ? 'starphoto' : 'star')
     : (tSat < tOpt ? 'sat' : 'noise');
 
   document.getElementById('hero-value').textContent = fmtTime(recommended);
   document.getElementById('hero-sub').textContent =
     `sky background ${P.toFixed(1)} e⁻/px/s · read noise ${R.toFixed(2)} e⁻ · f/${fr.toFixed(1)} · ${pxScale.toFixed(2)}″/px`;
-  document.getElementById('hero-badge').innerHTML = limitedBy === 'starphoto'
-    ? `<span class="hero-badge badge-sat">Star-saturation-limited (measured field)</span>`
+  document.getElementById('hero-badge').innerHTML = limitedBy === 'starcal'
+    ? `<span class="hero-badge badge-sat">Star-saturation-limited (calibrated)</span>`
+    : limitedBy === 'starphoto'
+    ? `<span class="hero-badge badge-sat">Star-saturation-limited (theoretical)</span>`
     : limitedBy === 'star'
     ? `<span class="hero-badge badge-sat">Star-protection-limited (flat cap)</span>`
     : limitedBy === 'sat'
@@ -768,7 +837,7 @@ function runCalc() {
     ['Sky-saturation cap', fmtTime(tSat)],
     ['Noise-optimal', fmtTime(tOpt)],
   ];
-  if (starMode === 'photometric') {
+  if (starMode === 'theoretical' || starMode === 'calibrated') {
     statRows.push(['Star peak-pixel rate', starPeakRate.toFixed(0) + ' e⁻/px/s']);
     statRows.push(['Star saturation cap', isFinite(tStarCap) ? fmtTime(tStarCap) : 'off']);
   } else {
@@ -808,8 +877,10 @@ function runCalc() {
   const sourceNote = calcMode === 'theory'
     ? `<strong>Theoretical estimate.</strong> Sky background derived from Bortle ${bortle} (SQM ${sqm.toFixed(2)}) via a calibrated approximation — see Methodology. For best accuracy, switch to Measured mode with a real test sub once you're at the eyepiece.`
     : `<strong>Measured from test sub.</strong> Sky rate computed directly from your ${(+document.getElementById('inp-test-exp').value||0)}s test exposure at gain ${gain}. This is the most accurate mode available.`;
-  const starNote = limitedBy === 'starphoto'
-    ? `<br><br><strong>Star-saturation cap is binding, computed from your field.</strong> A mag ${(+starMagInput).toFixed(1)} star at ${(+document.getElementById('inp-star-fwhm').value||2.5).toFixed(1)}″ FWHM saturates the peak pixel in ${fmtTime(tStarCap)} — well before the noise-optimal ${fmtTime(tOpt)}. This is a real number for this specific field, not a placeholder: it accounts for your aperture, QE, filter, and pixel scale. Re-check in Stellarium if you change target, rotation, or FOV.`
+  const starNote = limitedBy === 'starcal'
+    ? `<br><br><strong>Star-saturation cap is binding, calibrated from a real sub.</strong> Scaling from your reference star saturates the peak pixel in ${fmtTime(tStarCap)} — well before the noise-optimal ${fmtTime(tOpt)}. This scaling is purely the magnitude flux ratio, no zero-point or PSF-shape assumptions involved, so it should track your actual gear closely as long as the reference sub was shot at the same gain/filter.`
+    : limitedBy === 'starphoto'
+    ? `<br><br><strong>Star-saturation cap is binding (theoretical — verify before trusting it).</strong> A mag ${(+starMagInput).toFixed(1)} star at ${(+document.getElementById('inp-star-fwhm').value||2.5).toFixed(1)}″ FWHM is estimated to saturate the peak pixel in ${fmtTime(tStarCap)}, well before the noise-optimal ${fmtTime(tOpt)}. This rests on an unverified stellar-flux zero-point and an idealised PSF — switch to Calibrated mode above with one real measured star for a trustworthy number.`
     : limitedBy === 'star'
     ? `<br><br><strong>Star-protection cap is binding (flat, unverified).</strong> The noise-optimal length here would be ${fmtTime(tOpt)}, but that's long enough to risk clipping bright stars and bright cores. No magnitude was entered above, so this is a generic placeholder ceiling, not computed for this field — enter the brightest star's magnitude from Stellarium in the Target Star Check card for a real number.`
     : '';
@@ -819,7 +890,8 @@ function runCalc() {
 function wireCalcInputs() {
   const ids = ['sel-scope','sel-reducer','sel-camera','sel-mount','sel-filter','rng-gain','rng-bortle',
     'inp-rms-override','inp-sqm-override','inp-test-exp','inp-test-adu','inp-test-bias','rng-penalty',
-    'rng-headroom','inp-dark-override','inp-star-cap','inp-star-mag','inp-star-fwhm','inp-total-hours'];
+    'rng-headroom','inp-dark-override','inp-star-cap','inp-star-mag','inp-star-fwhm',
+    'inp-star-ref-mag','inp-star-ref-adu','inp-star-ref-bias','inp-star-ref-exp','inp-total-hours'];
   ids.forEach(id => {
     const el = document.getElementById(id);
     el.addEventListener('input', () => {
@@ -830,6 +902,8 @@ function wireCalcInputs() {
 
   document.getElementById('btn-mode-theory').addEventListener('click', () => setMode('theory'));
   document.getElementById('btn-mode-measured').addEventListener('click', () => setMode('measured'));
+  document.getElementById('btn-star-theory').addEventListener('click', () => setStarMode('theory'));
+  document.getElementById('btn-star-calibrated').addEventListener('click', () => setStarMode('calibrated'));
 }
 
 function setMode(mode) {
@@ -838,6 +912,15 @@ function setMode(mode) {
   document.getElementById('btn-mode-measured').classList.toggle('active', mode==='measured');
   document.getElementById('theory-fields').style.display = mode==='theory' ? '' : 'none';
   document.getElementById('measured-fields').style.display = mode==='measured' ? '' : 'none';
+  runCalc();
+}
+
+function setStarMode(mode) {
+  starCalcMode = mode;
+  document.getElementById('btn-star-theory').classList.toggle('active', mode==='theory');
+  document.getElementById('btn-star-calibrated').classList.toggle('active', mode==='calibrated');
+  document.getElementById('star-theory-fields').style.display = mode==='theory' ? '' : 'none';
+  document.getElementById('star-calibrated-fields').style.display = mode==='calibrated' ? '' : 'none';
   runCalc();
 }
 
